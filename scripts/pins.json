@@ -1,0 +1,27 @@
+{
+  "ffmpeg": {
+    "windows": {"version": "9.0.2", "url": "https://github.com/GyanD/codexffmpeg/releases/download/9.0.2/ffmpeg-9.0.2-essentials_build.zip", "sha256": "60f467265b1e312373dbcd92200c2618a74850f98d3d078e94296bb3fa2047ba"},
+    "linux": {"version": "8.1", "github": {"repo": "BtbN/FFmpeg-Builds", "tag": "latest", "asset": "ffmpeg-n8.1-latest-linux64-gpl-8.1.tar.xz"}},
+    "mac": {"version": "9.0.2", "files": [
+      {"url": "https://ffmpeg.martin-riedl.de/download/macos/arm64/1789931890_9.0.2/ffmpeg.zip", "sha256": "c8ed4c4e6978a03c485edbfe4e0a5dc2380f8a30bba5150531b31b094492d924"},
+      {"url": "https://ffmpeg.martin-riedl.de/download/macos/arm64/1789931890_9.0.2/ffprobe.zip", "sha256": "fcbe839537485eaee7a7a8bc5cbc0f90d53617e80943e8a5b2e31cb851197ea6"}]}
+  },
+  "node": {
+    "windows": {"version": "24.22.2", "url": "https://nodejs.org/dist/v24.22.2/node-v24.22.2-win-x64.zip", "sha256": "ca1bff5d8ead13c9f2ea404a176db46bd430704d5b5113734049fa365e7799e2"},
+    "linux": {"version": "24.22.2", "url": "https://nodejs.org/dist/v24.22.2/node-v24.22.2-linux-x64.tar.xz", "sha256": "48cc0e21e048790e54c0cf5749c2725005313d652651c40b7a21feb9697aaf75"},
+    "mac": {"version": "24.22.2", "url": "https://nodejs.org/dist/v24.22.2/node-v24.22.2-darwin-arm64.tar.gz", "sha256": "aa9549349e47dffaa42dcf95d6e06ade8c4bdafc980979883b88767670df385a"}
+  },
+  "chrome": {
+    "windows": {"version": "156.0.8078.47", "url": "https://storage.googleapis.com/chrome-for-testing-public/156.0.8078.47/win64/chrome-headless-shell-win64.zip", "sha256": "e0af9b23f8051cca4f37ca49cd425e8055701bfc0383c198d67f8d5cc5884249"},
+    "linux": {"version": "156.0.8078.47", "url": "https://storage.googleapis.com/chrome-for-testing-public/156.0.8078.47/linux64/chrome-headless-shell-linux64.zip", "sha256": "0d5acc62c3e213f8c87d3c298d66ffcf9a236d12ea4b9f85318bf85dbc279daa"},
+    "mac": {"version": "156.0.8078.47", "url": "https://storage.googleapis.com/chrome-for-testing-public/156.0.8078.47/mac-arm64/chrome-headless-shell-mac-arm64.zip", "sha256": "2fd1c09a3e1ebde9e69e6aba92f1dd3f21ad247b55d9bf66e39213ff4205436d"}
+  },
+  "deepfilter_model": {"url": "https://github.com/Rikorose/DeepFilterNet/raw/v0.5.6/models/DeepFilterNet3.zip", "sha256": "49c52edc8947ae1f9bf50d81530beaf3a2c3245aeaf34b6f31ff535cd22284d2"},
+  "rnnoise_model": {"url": "https://raw.githubusercontent.com/richardpl/arnndn-models/master/bd.rnnn", "sha256": "ae3f7411e1e6a884f839a4a145c394408398f09854dbc1216ee02faafc98a17b"},
+  "yunet": {"url": "https://github.com/opencv/opencv_zoo/raw/main/models/face_detection_yunet/face_detection_yunet_2023mar.onnx", "sha256": "8f2383e4dd3cfbb4553ea8718107fc0423210dc964f9f4280604804ed2552fa4"},
+  "fonts": {"montserrat": "5.2.8", "plus-jakarta-sans": "5.2.8"},
+  "subtitle_fonts": [
+    {"name": "Montserrat-Black.ttf", "url": "https://raw.githubusercontent.com/JulietaUla/Montserrat/555facfb2a18c72c3c0380f0d9c0f060453a9058/fonts/ttf/Montserrat-Black.ttf", "sha256": "ea67b37f8776eebea135cd1fe9adeaf6f9427683e8dc11ab8398b6be5f102c60"},
+    {"name": "NotoSansSymbols2-Regular.ttf", "url": "https://raw.githubusercontent.com/google/fonts/8b0a1d0f5983c89bc2b93f1b5fb55f9e252744b5/ofl/notosanssymbols2/NotoSansSymbols2-Regular.ttf", "sha256": "7d5fb73b7ca67a6798101741f5d280a3d016a56a197afcd4199dbb57b4b82a21"}
+  ]
+}

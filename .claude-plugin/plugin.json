@@ -1,0 +1,12 @@
+{
+  "name": "reel-studio",
+  "displayName": "Reel Studio",
+  "version": "1.0.0",
+  "description": "Turn raw talking-head clips into finished Instagram Reels from a short request: retakes and pauses cut, voice cleaned, word-timed subtitles, stickers, bespoke full-screen motion graphics, and hard quality gates.",
+  "author": {"name": "SirOxygenFish", "url": "https://github.com/SirOxygenFish"},
+  "homepage": "https://github.com/SirOxygenFish/reel-studio",
+  "repository": "https://github.com/SirOxygenFish/reel-studio",
+  "license": "MIT",
+  "icon": ".claude-plugin/icon.png",
+  "keywords": ["video", "reels", "instagram", "editing", "subtitles", "motion-graphics"]
+}

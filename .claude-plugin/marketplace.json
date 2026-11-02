@@ -1,0 +1,8 @@
+{
+  "name": "siroxygenfish",
+  "owner": {"name": "SirOxygenFish", "url": "https://github.com/SirOxygenFish"},
+  "metadata": {"description": "Reel Studio: finished Instagram Reels from raw clips, inside Claude Code"},
+  "plugins": [
+    {"name": "reel-studio", "source": "./", "version": "1.0.0", "description": "Finished Instagram Reels from raw clips and short requests."}
+  ]
+}

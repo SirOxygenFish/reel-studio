@@ -1,0 +1,13 @@
+{
+  "description": "Fast check that Reel Studio is set up. No installs here.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          { "type": "command", "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/session-check.sh\"", "timeout": 5 }
+        ]
+      }
+    ]
+  }
+}

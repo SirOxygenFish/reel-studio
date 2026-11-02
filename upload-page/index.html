@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Send video</title>
+<style>
+  :root {
+    --bg: #f6f4ef; --card: #ffffff; --text: #1d1d1b; --muted: #6b6860; --line: #e3dfd6;
+    --accent: #1f6feb; --accent-text: #ffffff; --ok: #1a7f37; --ok-bg: #e6f4ea; --err: #c62828; --err-bg: #fdecea;
+    --bar-bg: #e9e6df;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #161614; --card: #22221f; --text: #f1efe9; --muted: #a8a49a; --line: #3a3934;
+      --accent: #4c8dff; --accent-text: #0b0b0a; --ok: #5cc87a; --ok-bg: #1d3324; --err: #ff7b72; --err-bg: #3a1f1d;
+      --bar-bg: #34332e;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 18px/1.45 -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
+  main { max-width: 560px; margin: 0 auto; padding: 20px 16px 48px; }
+  h1 { font-size: 28px; margin: 4px 0 4px; }
+  h2 { font-size: 22px; margin: 0 0 12px; }
+  .lead { color: var(--muted); margin: 0 0 18px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 18px; margin-bottom: 20px; }
+  .big { display: block; width: 100%; border: 0; border-radius: 16px; padding: 22px 16px; font: inherit;
+         font-size: 21px; font-weight: 700; text-align: center; cursor: pointer; background: var(--accent); color: var(--accent-text); }
+  .big:disabled { opacity: .45; cursor: default; }
+  .second { background: transparent; color: var(--accent); border: 2px solid var(--accent); padding: 16px; font-size: 19px; }
+  input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; }
+  label.note { display: block; font-weight: 600; margin: 18px 0 6px; }
+  textarea { width: 100%; min-height: 84px; font: inherit; padding: 12px; border-radius: 12px;
+             border: 1px solid var(--line); background: var(--bg); color: var(--text); resize: vertical; }
+  .gap { height: 14px; }
+  .file { padding: 12px 0; border-top: 1px solid var(--line); }
+  .file:first-child { border-top: 0; }
+  .fname { font-weight: 600; overflow-wrap: anywhere; }
+  .fmeta { color: var(--muted); font-size: 16px; }
+  .bar { height: 14px; background: var(--bar-bg); border-radius: 7px; overflow: hidden; margin-top: 8px; }
+  .bar > div { height: 100%; width: 0; background: var(--accent); transition: width .2s; }
+  .file.ok .bar > div { background: var(--ok); }
+  .file.err .bar > div { background: var(--err); }
+  .status { font-size: 16px; margin-top: 4px; color: var(--muted); }
+  .file.ok .status { color: var(--ok); font-weight: 600; }
+  .file.err .status { color: var(--err); font-weight: 600; }
+  .warn { background: var(--bg); border-radius: 12px; padding: 12px 14px; font-size: 16px; color: var(--muted); margin-top: 14px; }
+  .done { background: var(--ok-bg); color: var(--ok); border-radius: 16px; padding: 22px 16px; text-align: center;
+          font-size: 24px; font-weight: 800; margin-top: 16px; }
+  .partial { background: var(--err-bg); color: var(--err); border-radius: 16px; padding: 18px 16px; text-align: center;
+             font-size: 19px; font-weight: 700; margin-top: 16px; }
+  .ready { display: flex; gap: 12px; align-items: center; padding: 14px 0; border-top: 1px solid var(--line); }
+  .ready:first-child { border-top: 0; }
+  .ready .info { flex: 1; min-width: 0; }
+  .dl { flex: none; text-decoration: none; background: var(--accent); color: var(--accent-text); font-weight: 700;
+        border-radius: 12px; padding: 12px 16px; font-size: 17px; }
+  .empty { color: var(--muted); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Send video</h1>
+
+  <section class="card" id="pick">
+    <label class="big" for="files">Choose videos or photos</label>
+    <input type="file" id="files" multiple accept="video/*,image/*">
+    <div id="chosen" hidden>
+      <div class="gap"></div>
+      <div id="chosenList"></div>
+      <label class="note" for="note">What should happen with this video?</label>
+      <textarea id="note" placeholder="For example: edit into a Reel"></textarea>
+      <div class="gap"></div>
+      <button class="big" id="send">Send</button>
+    </div>
+  </section>
+
+  <section class="card" id="progress" hidden>
+    <h2>Uploading</h2>
+    <div id="progressList"></div>
+    <div id="keepOpen"></div>
+    <div class="done" id="done" hidden>Done, uploaded</div>
+    <div class="partial" id="partial" hidden>Some files did not upload</div>
+    <div class="gap"></div>
+    <button class="big" id="retry" hidden>Try again</button>
+    <button class="big second" id="again" hidden>Send more</button>
+  </section>
+
+  <section class="card">
+    <h2>Finished videos</h2>
+    <div id="readyList" class="empty"></div>
+  </section>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const KEY = new URLSearchParams(location.search).get('k') || '';
+let picked = [], batch = null, busy = false;
+
+function size(b) {
+  const gb = b / 1024 ** 3, mb = b / 1024 ** 2;
+  const fmt = (x, d) => x.toFixed(d).replace(',', '.');
+  return gb >= 1 ? fmt(gb, 1) + ' GB' : mb >= 1 ? fmt(mb, mb < 10 ? 1 : 0) + ' MB' : Math.max(1, Math.round(b / 1024)) + ' KB';
+}
+function esc(s) { return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+const okType = f => /^(video|image)\//.test(f.type) ||
+  /\.(mov|mp4|m4v|3gp|3g2|avi|mkv|webm|hevc|mts|m2ts|jpe?g|png|heic|heif|webp|gif|bmp|tiff?|dng)$/i.test(f.name);
+
+$('files').addEventListener('change', e => {
+  const all = [...e.target.files];
+  picked = all.filter(okType);
+  const skipped = all.length - picked.length;
+  $('chosenList').innerHTML = picked.map(f =>
+    `<div class="file"><div class="fname">${esc(f.name)}</div><div class="fmeta">${size(f.size)}</div></div>`).join('') +
+    (skipped ? `<div class="status" style="color:var(--err)">Skipped: ${skipped}</div>` : '');
+  $('chosen').hidden = picked.length === 0 && !skipped;
+  $('send').disabled = picked.length === 0;
+});
+
+$('send').addEventListener('click', async () => {
+  if (!picked.length || busy) return;
+  busy = true;
+  $('send').disabled = true;
+  try {
+    const r = await fetch('/api/batch?k=' + KEY, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                          body: JSON.stringify({ note: $('note').value }) });
+    if (!r.ok) throw new Error();
+    batch = (await r.json()).batch;
+  } catch {
+    busy = false; $('send').disabled = false;
+    alert('The computer is not answering');
+    return;
+  }
+  $('pick').hidden = true;
+  $('progress').hidden = false;
+  $('progressList').innerHTML = picked.map((f, i) => `
+    <div class="file" id="f${i}">
+      <div class="fname">${esc(f.name)}</div>
+      <div class="bar"><div></div></div>
+      <div class="status">Waiting · ${size(f.size)}</div>
+    </div>`).join('');
+  picked.forEach(f => f.state = 'wait');
+  await runQueue();
+});
+
+function uploadOne(f, i) {
+  return new Promise(resolve => {
+    const row = $('f' + i), bar = row.querySelector('.bar > div'), st = row.querySelector('.status');
+    row.className = 'file';
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `/api/upload?k=${KEY}&batch=${encodeURIComponent(batch)}&name=${encodeURIComponent(f.name)}`);
+    xhr.upload.onprogress = e => {
+      if (!e.lengthComputable) return;
+      const p = e.loaded / e.total * 100;
+      bar.style.width = p.toFixed(1) + '%';
+      st.textContent = `${Math.floor(p)}% · ${size(e.loaded)} of ${size(e.total)}`;
+    };
+    xhr.onload = () => {
+      if (xhr.status === 201) {
+        bar.style.width = '100%'; row.className = 'file ok'; st.textContent = 'Uploaded · ' + size(f.size); f.state = 'ok';
+      } else {
+        let msg = 'failed';
+        try { msg = JSON.parse(xhr.responseText).error || msg; } catch {}
+        row.className = 'file err'; st.textContent = 'Failed: ' + msg; f.state = 'err';
+      }
+      resolve();
+    };
+    xhr.onerror = xhr.ontimeout = () => {
+      row.className = 'file err'; st.textContent = 'Failed: connection lost'; f.state = 'err'; resolve();
+    };
+    st.textContent = 'Uploading · ' + size(f.size);
+    xhr.send(f);
+  });
+}
+
+async function runQueue() {
+  busy = true;
+  ['done', 'partial', 'retry', 'again'].forEach(id => $(id).hidden = true);
+  $('keepOpen').hidden = false;
+  for (let i = 0; i < picked.length; i++) {
+    if (picked[i].state !== 'ok') await uploadOne(picked[i], i);
+  }
+  busy = false;
+  $('keepOpen').hidden = true;
+  const failed = picked.filter(f => f.state !== 'ok').length;
+  $('done').hidden = failed > 0;
+  $('partial').hidden = failed === 0;
+  $('retry').hidden = failed === 0;
+  $('again').hidden = false;
+  loadReady();
+}
+
+$('retry').addEventListener('click', () => { if (!busy) runQueue(); });
+$('again').addEventListener('click', () => location.reload());
+window.addEventListener('beforeunload', e => { if (busy) { e.preventDefault(); e.returnValue = ''; } });
+
+const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) ||
+  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+// iOS Shortcut "SaveReel": Get Contents of URL, then Save to Photo Album. Address is plain ASCII: /v/<id>.<ext>
+const galleryLink = f => 'shortcuts://run-shortcut?name=SaveReel&input=text&text=' +
+  encodeURIComponent(location.origin + '/v/' + f.id + f.ext + '?k=' + KEY);
+
+async function loadReady() {
+  const box = $('readyList');
+  try {
+    const r = await fetch('/api/ready?k=' + KEY, { cache: 'no-store' });
+    const files = (await r.json()).files;
+    if (!files.length) { box.className = 'empty'; box.textContent = 'Nothing yet'; return; }
+    box.className = '';
+    box.innerHTML = files.map(f => `
+      <div class="ready">
+        <div class="info">
+          <div class="fname">${esc(f.title)}</div>
+          <div class="fmeta">${new Date(f.mtime * 1000).toLocaleString(undefined, { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })} · ${size(f.size)}</div>
+        </div>
+        ${isIOS ? `<a class="dl" href="${galleryLink(f)}">To gallery</a>`
+                : `<a class="dl" href="/download?k=${KEY}&f=${encodeURIComponent(f.name)}" download>Download</a>`}
+      </div>`).join('');
+  } catch {
+    box.className = 'empty'; box.textContent = 'Could not load the list';
+  }
+}
+loadReady();
+</script>
+</body>
+</html>

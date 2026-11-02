@@ -1,0 +1,6 @@
+{
+  "northwind": {"name": "Northwind", "primary": "#2F6F73", "accent": "#E0A040", "mode": "light", "font": "Montserrat", "body_font": "Plus Jakarta Sans",
+                "wordmark": "northwind", "handle": "@northwind.example", "language": "en", "about": "Light, calm teal with a warm amber accent"},
+  "sunrise": {"name": "Sunrise", "primary": "#3B5BDB", "accent": "#E8590C", "mode": "dark", "font": "Poppins", "body_font": "Inter",
+              "wordmark": "sunrise", "handle": "@sunrise.example", "language": "en", "about": "Dark navy with a warm orange accent"}
+}

@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# reel-tool: the single entry point to Reel Studio's machine work (on PATH in Claude Code's Bash tool while the plugin is on).
+# Finds its own data dir, so it works from any folder. `reel-tool help` lists the commands. Windows (Git Bash), Linux, macOS.
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+DATA="${REEL_STUDIO_DATA:-${CLAUDE_PLUGIN_DATA:-}}"
+if [ -z "$DATA" ]; then
+  BASE="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/plugins/data"
+  [ -f "$BASE/.reel-studio-data" ] && DATA="$(cat "$BASE/.reel-studio-data")"     # written by the SessionStart hook
+  if [ -z "$DATA" ]; then
+    for d in "$BASE"/reel-studio*; do
+      [ -d "$d" ] && DATA="$d" && break
+    done
+  fi
+  [ -n "$DATA" ] || DATA="$BASE/reel-studio-siroxygenfish"
+fi
+export REEL_STUDIO_DATA="$DATA"
+if [ "$1" = "setup" ]; then
+  shift
+  exec bash "$ROOT/scripts/bootstrap.sh" "$@"
+fi
+PY="$DATA/env/venv/Scripts/python.exe"
+[ -x "$PY" ] || PY="$DATA/env/venv/bin/python"
+if [ ! -x "$PY" ]; then
+  echo "Reel Studio is not set up yet. Run /reel-setup (or: reel-tool setup)." >&2
+  exit 3
+fi
+# Linux: the CUDA libraries from the NVIDIA wheels must be on the loader path before Python starts
+if [ "$(uname -s)" = "Linux" ]; then
+  for d in "$DATA"/env/venv/lib/python3*/site-packages/nvidia/*/lib; do
+    [ -d "$d" ] && LD_LIBRARY_PATH="$d${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+  done
+  export LD_LIBRARY_PATH
+fi
+export PYTHONUTF8=1 PYTHONIOENCODING=utf-8
+exec "$PY" "$ROOT/scripts/cli.py" "$@"

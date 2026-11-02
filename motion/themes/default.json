@@ -1,0 +1,218 @@
+{
+ "name": "default",
+ "label": "Default",
+ "about": "Neutral grey-blue and warm orange, used until a brand profile exists.",
+ "wordmark": "",
+ "colors": {
+  "bgDeep": "#C8D4E5",
+  "c1": "#3D5A80",
+  "c1l": "#9EB4D1",
+  "c1x": "#DBE3EE",
+  "c2": "#314968",
+  "acc": "#C05229",
+  "acc2": "#DB7B57",
+  "acc-soft": "#EDDBD4",
+  "ink": "#141D29",
+  "paper": "#FCFDFE",
+  "surface": "rgba(252,253,254,0.78)",
+  "text": "#141D29",
+  "muted": "#324967",
+  "good": "#3E8A4A",
+  "bad": "#B5452F",
+  "line": "rgba(20,29,41,0.2)",
+  "on-acc": "#F9FBFD",
+  "on-c1": "#F9FBFD",
+  "on-c2": "#F9FBFD",
+  "on-good": "#F9FBFD",
+  "on-bad": "#F9FBFD",
+  "on-disc": "#F9FBFD",
+  "hero-ic": "#F9FBFD",
+  "hl": "#141D29",
+  "mark-bg": "#C05229",
+  "mark-ink": "#F9FBFD",
+  "title-c": "#141D29",
+  "title-2": "#314968",
+  "mark": "#314968",
+  "disc-a": "#5177A9",
+  "disc-b": "#304764",
+  "chat-bg": "#EFF3F8",
+  "phone": "#141D29",
+  "msg-them": "#FFFFFF",
+  "head2": "#314968",
+  "dim": "#97AFCE",
+  "bar": "#3D5A80",
+  "struct": "#314968",
+  "outline": "#314968",
+  "orb1": "#B3C4DB",
+  "orb2": "#E0E9F5",
+  "orb3": "#EDDBD4",
+  "orb-op": "0.55",
+  "sweep": "rgba(255,255,255,.45)",
+  "grid-dot": "rgba(20,29,41,0.3)",
+  "vig": "rgba(49,73,104,0.16)",
+  "hard-shadow": "rgba(20,29,41,0.16)",
+  "wipe-a": "#314968",
+  "wipe-b": "#C05229",
+  "wipe-c": "#7594BD",
+  "peep-line": "#141D29",
+  "peep-skin": "#F2CBA6",
+  "peep-top": "#F4D7CD",
+  "peep-hair": "#243142",
+  "substrip": "radial-gradient(ellipse 78% 36% at 50% 52%, rgba(20,29,41,0.46) 0%, rgba(20,29,41,0.3) 42%, rgba(20,29,41,0) 76%)"
+ },
+ "bgs": [
+  {
+   "a": "#E5EBF3",
+   "b": "#F6F8FB"
+  },
+  {
+   "a": "#DEE6EF",
+   "b": "#F0F4FA"
+  },
+  {
+   "a": "#E2E8F1",
+   "b": "#F4F7FB"
+  },
+  {
+   "a": "#F1E8E4",
+   "b": "#FAF6F5"
+  },
+  {
+   "a": "#141D29",
+   "b": "#24354C",
+   "alt": true
+  }
+ ],
+ "fonts": {
+  "display": {
+   "family": "Montserrat",
+   "weight": 800
+  },
+  "head": {
+   "family": "Montserrat",
+   "weight": 800
+  },
+  "body": {
+   "family": "Plus Jakarta Sans",
+   "weight": 700
+  },
+  "files": {
+   "Plus Jakarta Sans": {
+    "pkg": "@fontsource/plus-jakarta-sans",
+    "prefix": "plus-jakarta-sans",
+    "weights": [
+     600,
+     700,
+     800
+    ]
+   },
+   "Montserrat": {
+    "pkg": "@fontsource/montserrat",
+    "prefix": "montserrat",
+    "weights": [
+     600,
+     700,
+     800
+    ]
+   }
+  }
+ },
+ "radius": {
+  "s": 16,
+  "m": 28,
+  "l": 48
+ },
+ "shadow": "0 30px 60px rgba(20,29,41,0.22)",
+ "grid": 0.18,
+ "title": {
+  "fs": 96,
+  "top": 214
+ },
+ "particles": {
+  "count": 22,
+  "colors": [
+   "rgba(61,90,128,0.35)",
+   "rgba(192,82,41,0.3)"
+  ]
+ },
+ "motion": {
+  "enter": 0.46,
+  "overshoot": 1.5,
+  "letter": 0.02,
+  "stagger": 0.1,
+  "trans": 0.4,
+  "lead": 0.12,
+  "camZ": 1.07,
+  "idleAmp": 1.15
+ },
+ "transitions": [
+  "push",
+  "zoom",
+  "rise",
+  "iris"
+ ],
+ "swatches": [
+  [
+   "Background",
+   "background",
+   "#E5EBF3"
+  ],
+  [
+   "Glow",
+   "background glow",
+   "#F6F8FB"
+  ],
+  [
+   "Primary",
+   "discs, buttons",
+   "#3D5A80"
+  ],
+  [
+   "Secondary",
+   "structure, wordmark",
+   "#314968"
+  ],
+  [
+   "Accent",
+   "the one accent",
+   "#C05229"
+  ],
+  [
+   "Accent soft",
+   "soft fills",
+   "#EDDBD4"
+  ],
+  [
+   "Ink",
+   "text, outlines",
+   "#141D29"
+  ],
+  [
+   "Muted",
+   "secondary text",
+   "#324967"
+  ],
+  [
+   "Paper",
+   "cards",
+   "#FCFDFE"
+  ],
+  [
+   "Positive",
+   "good",
+   "#3E8A4A"
+  ],
+  [
+   "Negative",
+   "bad",
+   "#B5452F"
+  ]
+ ],
+ "alt": {
+  "text": "#E4ECF6",
+  "muted": "#B0C4DD",
+  "hl": "#E4ECF6",
+  "line": "rgba(228,236,246,0.24)",
+  "grid-dot": "rgba(228,236,246,0.3)"
+ }
+}
