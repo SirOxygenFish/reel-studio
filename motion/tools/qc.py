@@ -30,6 +30,9 @@ def probe(src):
     return s["width"], s["height"], float(a) / float(b), float(j["format"]["duration"])
 
 
+TUTORIAL = "--tutorial" in sys.argv     # tutorials: no subtitles and not an Instagram post, so the Instagram zones do not apply
+
+
 def motion(src, W, H, sub, fps_in):
     """motion energy per frame at 15 fps on a 1/8 scale gray image, graphics area only"""
     w, h = W // 8, H // 8
@@ -39,7 +42,7 @@ def motion(src, W, H, sub, fps_in):
     mask = np.ones((h, w), bool)
     if sub:
         mask[int(sub[0] / 8):int(sub[1] / 8)] = False              # subtitle band
-    if H > 1500:
+    if H > 1500 and not TUTORIAL:
         mask[int(1560 / 8):] = False                              # Instagram caption/buttons strip
     d = np.abs(np.diff(fr, axis=0))[:, mask].mean(1)
     return np.concatenate([[d[0] if len(d) else 0], d]), 15.0
@@ -61,7 +64,7 @@ def runs(t, ok, min_len):
 def coverage(rep):
     x0, y0, x1, y1 = rep["box"]; g = 10
     gw, gh = int((x1 - x0) / g), int((y1 - y0) / g); cov, safe = [], []
-    sub = (1240, 1510) if rep["H"] > 1500 else None
+    sub = (1240, 1510) if rep["H"] > 1500 and not TUTORIAL else None
     cuts = [s["start"] for s in rep.get("scenes") or []][1:]
     edges = rep.get("edges") or []                               # hybrid clips: iris in from the face / zoom out into it
     for t, boxes in rep["samples"]:
@@ -75,7 +78,7 @@ def coverage(rep):
                 safe.append([t, "subtitle band", [a, b, c, d]])
             if a < -4 or c > rep["W"] + 4 or b < -4 or d > rep["H"] + 4:
                 safe.append([t, "outside frame", [a, b, c, d]])
-            if rep["H"] > 1500 and b < 120 and d > 20:
+            if rep["H"] > 1500 and not TUTORIAL and b < 120 and d > 20:
                 safe.append([t, "instagram top strip", [a, b, c, d]])
         cov.append([t, round(float(m.mean()), 3)])
     # an issue counts only if it persists >= 0.5 s in one continuous run (entrances from off-screen are fine)
@@ -94,19 +97,20 @@ def coverage(rep):
     return cov, sorted(keep)
 
 
-def sheet(src, dur, every, dead, out):
+def sheet(src, dur, every, dead, out, wide=False):
     n = int(dur / every) + 1; tiles = []
+    tw, th = (384, 216) if wide else (216, 384)                  # tiles keep the video's own shape
     for i in range(n):
         t = min(dur - 0.05, i * every + every / 2)
-        raw = subprocess.run([FF, "-v", "error", "-ss", f"{t:.2f}", "-i", src, "-frames:v", "1", "-vf", "scale=216:384", "-f", "rawvideo",
+        raw = subprocess.run([FF, "-v", "error", "-ss", f"{t:.2f}", "-i", src, "-frames:v", "1", "-vf", f"scale={tw}:{th}", "-f", "rawvideo",
                               "-pix_fmt", "rgb24", "-"], capture_output=True).stdout
-        if len(raw) == 216 * 384 * 3:
-            tiles.append((t, Image.fromarray(np.frombuffer(raw, np.uint8).reshape(384, 216, 3))))
-    cols = 8; rows = (len(tiles) + cols - 1) // cols
-    S = Image.new("RGB", (cols * 220, rows * 412), "white"); D = ImageDraw.Draw(S)
+        if len(raw) == tw * th * 3:
+            tiles.append((t, Image.fromarray(np.frombuffer(raw, np.uint8).reshape(th, tw, 3))))
+    cols = 5 if wide else 8; rows = (len(tiles) + cols - 1) // cols
+    S = Image.new("RGB", (cols * (tw + 4), rows * (th + 28)), "white"); D = ImageDraw.Draw(S)
     f = ImageFont.truetype(C.sub_font()[1], 18)
     for i, (t, im) in enumerate(tiles):
-        x, y = i % cols * 220, i // cols * 412
+        x, y = i % cols * (tw + 4), i // cols * (th + 28)
         S.paste(im, (x + 2, y + 26))
         bad = any(a - 0.2 <= t <= b + 0.2 for a, b in dead)
         D.text((x + 6, y + 3), f"{t:.1f} s" + ("  DEAD" if bad else ""), fill=(200, 0, 0) if bad else (0, 0, 0), font=f)
@@ -147,7 +151,7 @@ def main():
                            "lowest": sorted(cov, key=lambda x: x[1])[:5]}
         res["safe_issues"] = safe[:40]; res["safe_issue_count"] = len(safe)
         res["scenes"] = rep.get("scenes")
-    sheet(src, dur, float(arg("--every", "2")), dead, os.path.join(out_dir, base + "_qc_sheet.jpg"))
+    sheet(src, dur, float(arg("--every", "2")), dead, os.path.join(out_dir, base + "_qc_sheet.jpg"), wide=W > H)
     json.dump(res, open(os.path.join(out_dir, base + "_qc.json"), "w"), indent=1)
     m = res["motion"]
     print(f"QC {base}: {dur:.1f} s | motion median {m['median']} p10 {m['p10']} | still {m['still_share']*100:.0f} % | "

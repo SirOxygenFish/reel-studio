@@ -1,0 +1,26 @@
+{
+ "_about": "Tutorial 1 (PC, 16:9): Settings, Claude Code, Remote Control, the first and third switch on, the middle one off, then a new session in the videos folder. Scene 'at' is in seconds; acts and caps are seconds from the scene start; $keys come from strings.json.",
+ "size": [1920, 1080], "t1": 41.0, "out": "docs/tutorials/tutorial1-pc.{lang}.mp4",
+ "scenes": [
+  {"type": "tut_title", "at": 0, "title": "$title", "sub": "$sub"},
+  {"type": "t1_app", "at": 3.6, "in": "blur", "step": 1, "caps": [[0.05, "$c_settings"]],
+   "acts": [{"t": 0.9, "move": "user", "d": 0.9}, {"t": 1.9, "click": "user"}, {"t": 2.0, "show": "menu", "d": 0.35},
+            {"t": 2.8, "move": "settings", "d": 0.7}, {"t": 3.7, "click": "settings"}, {"t": 3.8, "ring": "settings", "d": 2.2}]},
+  {"type": "t1_settings", "at": 10.0, "in": "blur", "step": 2,
+   "caps": [[0.05, "$c_code"], [3.4, "$c_scroll"], [6.6, "$c_first"], [9.6, "$c_middle"], [12.6, "$c_third"]],
+   "acts": [{"t": 0.8, "move": "nav_code", "d": 0.8}, {"t": 1.8, "click": "nav_code"}, {"t": 1.85, "sel": "nav_code"},
+            {"t": 3.6, "move": "rc", "d": 0.8}, {"t": 3.8, "scroll": "page", "y": 300, "d": 1.3}, {"t": 5.2, "ring": "rcrows", "d": 1.3},
+            {"t": 6.7, "move": "sw0", "d": 0.8}, {"t": 7.7, "click": "sw0"}, {"t": 7.75, "toggle": "sw0"},
+            {"t": 9.7, "show": "off", "d": 0.4}, {"t": 9.7, "ring": "row1", "d": 2.5}, {"t": 9.9, "move": "row1", "dx": 120, "dy": 70, "d": 0.9},
+            {"t": 12.7, "move": "sw2", "d": 0.8}, {"t": 13.7, "click": "sw2"}, {"t": 13.75, "toggle": "sw2"},
+            {"t": 14.8, "ring": "rcrows", "d": 2.4}]},
+  {"type": "t1_session", "at": 27.5, "in": "blur", "step": 3, "caps": [[0.05, "$c_after"], [2.6, "$c_new"], [5.2, "$c_pick"]],
+   "acts": [{"t": 2.7, "move": "new", "d": 0.7}, {"t": 3.5, "click": "new"}, {"t": 3.9, "move": "choose", "d": 0.6}, {"t": 4.6, "click": "choose"},
+            {"t": 4.7, "show": "dlg", "d": 0.35}, {"t": 5.3, "move": "videos", "d": 0.6}, {"t": 6.0, "click": "videos"}, {"t": 6.0, "sel": "videos"},
+            {"t": 6.1, "show": "inside", "d": 0.3}, {"t": 6.4, "move": "reels", "d": 0.5}, {"t": 7.0, "click": "reels"}, {"t": 7.0, "sel": "reels"},
+            {"t": 7.3, "move": "select", "d": 0.6}, {"t": 8.0, "click": "select"}, {"t": 8.1, "hide": "dlg", "d": 0.3}, {"t": 8.1, "hide": "choose", "d": 0.2},
+            {"t": 8.2, "show": "chosen", "d": 0.35}, {"t": 8.4, "ring": "chosen", "d": 1.1}]},
+  {"type": "tut_end", "at": 37.0, "in": "blur", "title": "$end_title", "rows": "$end_rows"}
+ ],
+ "dings": [37.6]
+}

@@ -15,7 +15,7 @@ ENV = C.ENVD; STATE = ENV / "setup_state.json"
 PINS = json.load(open(C.ROOT / "scripts" / "pins.json", encoding="utf-8"))
 OS = "windows" if C.IS_WIN else "mac" if sys.platform == "darwin" else "linux"
 UV = ENV / "uv" / ("uv.exe" if C.IS_WIN else "uv")
-PY_PKGS = ["numpy<3", "scipy", "pillow", "opencv-python-headless>=4.8", "faster-whisper==1.2.1", "resvg_py==0.5.0", "huggingface_hub"]
+PY_PKGS = ["numpy<3", "scipy", "pillow", "opencv-python-headless>=4.8", "faster-whisper==1.2.1", "resvg_py==0.5.0", "huggingface_hub", "segno==1.6.1"]
 DF_PKGS = ["torch", "torchaudio", "loguru", "appdirs", "packaging", "requests", "sympy"]
 DF_NODEPS = ["deepfilternet==0.5.6", "deepfilterlib==0.5.6"]       # their numpy<2 pin is stale; numpy 2 works
 GPU_PKGS = ["nvidia-cublas-cu12", "nvidia-cudnn-cu12==9.*"]
@@ -220,6 +220,11 @@ def main():
     ENV.mkdir(parents=True, exist_ok=True); s = state()
     if "whisper" in s and not C.whisper_ready():            # older installs kept the model in ~/.cache: fetch it into the data dir
         s.pop("whisper")
+    if "python" in s:                                         # a package added in a later version (segno: the phone QR code)
+        try:
+            import segno  # noqa: F401
+        except ImportError:
+            s.pop("python")
     todo = [(k, f) for k, f in STAGES if (only == k if only else k not in s)]
     if "--check" in argv:
         print(json.dumps({"done": [k for k, _ in STAGES if k in s], "todo": [k for k, _ in STAGES if k not in s]})); return

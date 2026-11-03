@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.1.0 (2026-11-03)
+
+For people who only use their phone.
+
+### Getting started
+- "Start here" guides in English, Russian and Polish: every step in order, from the desktop app to the daily routine
+- An install prompt (three languages) to paste into Claude Code: it checks the computer, shows (never runs) any step that needs administrator rights, installs the plugin and its tools, turns on the upload page autostart and ends with the phone link as a QR code
+- Two tutorials made with the motion engine, in three languages: the computer settings (16:9) and the iPhone routine (9:16, played offline by the upload page)
+
+### Phone
+- Upload page in English, Russian and Polish, picked from the phone's language, with a How to button and a Home Screen icon
+- `reel-tool autostart on|off|status`: the page starts at every login without a session (Task Scheduler or the Startup folder on Windows, a LaunchAgent on macOS, systemd --user or desktop autostart on Linux), user level only
+- `reel-tool shortcut on|off`: a desktop icon that starts the page and shows the phone link as a QR code
+- `reel-tool phone-link`: the link plus a QR code in the terminal and as a page
+- The page never shares a port with another program and says how to pick another one; a second start only prints the link
+
+### Engine
+- Storyboards without words (tutorials), explicit sound cues, a fixed sound reference when there is no voice
+- `qc.py --tutorial`: the Instagram-only zones are skipped; frame sheets keep the video's shape
+
 ## 1.0.0 (2026-11-02)
 
 First public release.

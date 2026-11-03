@@ -1,21 +1,29 @@
-"""reel-tool upload-page [--port N]: starts the phone upload page (LAN and Tailscale only, private key in the link)."""
-import secrets, sys
-from pathlib import Path
+"""reel-tool upload-page [--port N]: starts the phone upload page (LAN and Tailscale only, private key in the link).
+
+If the page already runs (autostart, the desktop shortcut or another session) it only prints the links. A port held by another
+program is never shared: it stops with the line that picks another port.
+"""
+import sys
 
 import common as C
-
-sys.path.insert(0, str(C.ROOT / "upload-page"))
+import phone
 
 
 def main(argv):
+    port, key = phone.settings()
+    if "--port" in argv:
+        port = int(argv[argv.index("--port") + 1])
+    st = phone.state(port, key)
+    if st == "ours":
+        print("The upload page is already running. Open on the phone:")
+        for _, url in phone.links(port, key):
+            print("  " + url)
+        return
+    if st == "busy":
+        C.fail(f"port {port} is used by another program. Pick a free one: reel-tool config upload_page.port 5081")
     import server
-    cfg = C.load_json(C.CONFIG_FILE, {}) or {}
-    up = cfg.setdefault("upload_page", {})
-    if not up.get("key"):
-        up["key"] = secrets.token_urlsafe(16); C.save_json(C.CONFIG_FILE, cfg)
-    port = int(argv[argv.index("--port") + 1]) if "--port" in argv else int(up.get("port", 5080))
-    F = C.folders()
-    server.serve(F["input"], F["output"], port, up["key"])
+    F = C.upload_folders()
+    server.serve(F["input"], F["output"], port, key)
 
 
 if __name__ == "__main__":

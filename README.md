@@ -2,7 +2,15 @@
 
 A Claude Code plugin that turns raw talking-head clips into finished 1080x1920 Instagram Reels from a short request. Say "edit this", "монтируй" or "zrób z tego rolkę" and you get: retakes, false starts and pauses cut; a cleaned voice at -14 LUFS; word-timed subtitles; stickers and a calm camera; full-screen motion graphics drawn new for your script; and hard quality gates that a Reel must pass before it is delivered.
 
-Install guides in other languages: [Русский](docs/INSTALL.ru.md) · [Polski](docs/INSTALL.pl.md)
+**Not technical? Start here.** One page with every step, then one text you paste into Claude and it installs everything:
+
+| | Start here | Install prompt (paste into Claude Code) | Tutorial 1 (computer, 40 s) |
+|---|---|---|---|
+| English | [START_HERE.md](docs/START_HERE.md) | [INSTALL_PROMPT.md](docs/INSTALL_PROMPT.md) | [video](https://github.com/SirOxygenFish/reel-studio/raw/main/docs/tutorials/tutorial1-pc.en.mp4) |
+| Русский | [START_HERE.ru.md](docs/START_HERE.ru.md) | [INSTALL_PROMPT.ru.md](docs/INSTALL_PROMPT.ru.md) | [видео](https://github.com/SirOxygenFish/reel-studio/raw/main/docs/tutorials/tutorial1-pc.ru.mp4) |
+| Polski | [START_HERE.pl.md](docs/START_HERE.pl.md) | [INSTALL_PROMPT.pl.md](docs/INSTALL_PROMPT.pl.md) | [film](https://github.com/SirOxygenFish/reel-studio/raw/main/docs/tutorials/tutorial1-pc.pl.mp4) |
+
+Tutorial 2 (the iPhone part) is built into the phone upload page: tap **How to** there.
 
 ## Requirements
 
@@ -129,7 +137,17 @@ A Reel is delivered only if it passes all of these: format; motion, and animatio
 
 ## Phone uploads
 
-`/reel-upload-page` starts a small page: open the printed link on your phone, on the same Wi-Fi or over [Tailscale](https://tailscale.com). Clips land in the input folder with an optional note; finished Reels can be downloaded from the same page. It refuses any address outside private networks and your tailnet, and the link carries a private key. Do not forward the port to the internet.
+`/reel-upload-page` starts a small page: open the printed link on your phone, on the same Wi-Fi or over [Tailscale](https://tailscale.com). Clips land in the input folder with an optional note; finished Reels can be downloaded from the same page, and on an iPhone the **To gallery** button hands them to the SaveReel shortcut, which saves them to Photos. The page speaks English, Russian and Polish (from the phone's language) and its **How to** button plays the iPhone tutorial from your computer. It refuses any address outside private networks and your tailnet, and the link carries a private key. Do not forward the port to the internet.
+
+Keep it running without a session (user level, no administrator rights):
+
+| | |
+|---|---|
+| `reel-tool autostart on --folder "<videos folder>"` | Starts the page at every login: a Task Scheduler task on Windows (Startup folder if that is not allowed), a LaunchAgent on macOS, a `systemd --user` service on Linux (desktop autostart if there is no user systemd) |
+| `reel-tool autostart off` / `status` | Stops starting it / shows what is set up; the files it made go to the Recycle Bin or Trash |
+| `reel-tool shortcut on` / `off` | A desktop icon that starts the page and shows the phone link as a QR code |
+| `reel-tool phone-link --start --open` | The same from the command line: prints the link and a QR code |
+| `reel-tool config upload_page.port 5081` | Another port, if 5080 is taken (the page never shares a port with another program) |
 
 ## Configuration
 

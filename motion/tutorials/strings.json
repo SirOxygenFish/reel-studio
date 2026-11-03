@@ -1,0 +1,130 @@
+{
+ "_about": "Tutorial texts. Captions are in the viewer's language. On-screen labels of the Claude desktop app stay English (the app has no Russian or Polish interface). iOS labels are translated only where the localized wording is certain (Share, Add to Home Screen, Add, Photos, Shortcuts); otherwise the English label is shown and the caption describes it. No long dashes anywhere.",
+ "en": {
+  "t1": {
+   "title": "Set up the computer", "sub": "Two switches in Settings, then a new session",
+   "c_settings": "Open Settings: click your name in the bottom left corner, then Settings",
+   "c_code": "In the list on the left, choose Claude Code",
+   "c_scroll": "Scroll down to the Remote Control section",
+   "c_first": "Turn on the first switch",
+   "c_middle": "Leave the middle one off",
+   "c_third": "Turn on the third switch",
+   "c_after": "After the installation, start a new session in your videos folder",
+   "c_new": "Click New session, then choose a folder",
+   "c_pick": "Pick Videos, then Reels, and click Select folder",
+   "end_title": "Ready", "end_rows": ["Remote Control switches: on, off, on", "One session in the videos folder", "From now on, work from your phone"],
+   "leaveOff": "leave off", "name": "Your name", "initial": "Y"
+  },
+  "t2": {
+   "title": "Your iPhone", "sub": "Send clips, get the Reel back",
+   "c_link": "Open the SaveReel link and tap the add button at the bottom",
+   "c_build1": "No link? Build it yourself in the Shortcuts app",
+   "c_build2": "Add two actions: Get Contents of URL, then Save to Photo Album",
+   "c_build3": "Name it exactly SaveReel",
+   "c_home1": "Open the upload page in Safari and tap Share",
+   "c_home2": "Then Add to Home Screen, and Add",
+   "c_up1": "Tap the icon, then Choose videos or photos",
+   "c_up2": "Downloaded clips are often under Recently Saved",
+   "c_up3": "Tap Send and keep the page open until it is done",
+   "c_cl1": "Open the Claude app, then Code, then your computer's session",
+   "c_cl2": "Write: make a Reel",
+   "c_gal1": "When it is ready, tap To gallery on the upload page",
+   "c_gal2": "The Reel is in Photos",
+   "end_title": "Every day", "end_rows": ["Upload the clips", "Claude app: make a Reel", "Upload page: To gallery"],
+   "share": "Share", "addHome": "Add to Home Screen", "add": "Add", "photos": "Photos", "shortcutsApp": "Shortcuts",
+   "addShortcut": "Add Shortcut", "getContents": "Get Contents of URL", "saveToAlbum": "Save to Photo Album",
+   "actionsShort": "Get Contents of URL, Save to Photo Album",
+   "recent": "Recently Saved", "recentNote": "clips you downloaded", "pickDone": "Add",
+   "chat": "Chat", "command": "make a Reel", "reply": "Done. Your Reel is ready.", "reelName": "My Reel",
+   "pageTitle": "Send video", "choose": "Choose videos or photos", "send": "Send", "done": "Done, uploaded", "finished": "Finished videos", "gallery": "To gallery"
+  }
+ },
+ "ru": {
+  "t1": {
+   "title": "Настройка компьютера", "sub": "Два переключателя в настройках и новая сессия",
+   "c_settings": "Откройте настройки: нажмите на своё имя внизу слева, затем Settings",
+   "c_code": "В списке слева выберите Claude Code",
+   "c_scroll": "Прокрутите вниз до раздела Remote Control",
+   "c_first": "Включите первый переключатель",
+   "c_middle": "Средний не трогайте, он остаётся выключенным",
+   "c_third": "Включите третий переключатель",
+   "c_after": "После установки начните новую сессию в папке с видео",
+   "c_new": "Нажмите New session и выберите папку",
+   "c_pick": "Откройте Videos, выберите Reels и нажмите Select folder",
+   "end_title": "Готово", "end_rows": ["Переключатели Remote Control: вкл, выкл, вкл", "Одна сессия в папке с видео", "Дальше всё делается с телефона"],
+   "leaveOff": "не включать", "name": "Ваше имя", "initial": "В"
+  },
+  "t2": {
+   "title": "Ваш iPhone", "sub": "Отправить ролики и получить готовый рилс",
+   "c_link": "Откройте ссылку SaveReel и нажмите кнопку добавления внизу",
+   "c_build1": "Нет ссылки? Соберите команду сами в приложении «Быстрые команды»",
+   "c_build2": "Добавьте два действия: Get Contents of URL, затем Save to Photo Album",
+   "c_build3": "Назовите её точно так: SaveReel",
+   "c_home1": "Откройте страницу загрузки в Safari и нажмите «Поделиться»",
+   "c_home2": "Затем «На экран „Домой“» и «Добавить»",
+   "c_up1": "Нажмите на значок, затем «Выбрать видео или фото»",
+   "c_up2": "Скачанные ролики часто лежат в недавно сохранённых (Recently Saved)",
+   "c_up3": "Нажмите «Отправить» и не закрывайте страницу до конца загрузки",
+   "c_cl1": "Откройте приложение Claude, затем Code и сессию вашего компьютера",
+   "c_cl2": "Напишите: монтируй",
+   "c_gal1": "Когда будет готово, нажмите «В галерею» на странице загрузки",
+   "c_gal2": "Рилс уже в «Фото»",
+   "end_title": "Каждый день", "end_rows": ["Загрузите ролики", "Приложение Claude: монтируй", "Страница загрузки: В галерею"],
+   "share": "Поделиться", "addHome": "На экран «Домой»", "add": "Добавить", "photos": "Фото", "shortcutsApp": "Быстрые команды",
+   "addShortcut": "Add Shortcut", "getContents": "Get Contents of URL", "saveToAlbum": "Save to Photo Album",
+   "actionsShort": "Get Contents of URL, Save to Photo Album",
+   "recent": "Recently Saved", "recentNote": "недавно сохранённые", "pickDone": "Add",
+   "chat": "Chat", "command": "монтируй", "reply": "Готово. Рилс готов.", "reelName": "Мой рилс",
+   "pageTitle": "Отправить видео", "choose": "Выбрать видео или фото", "send": "Отправить", "done": "Готово, загружено", "finished": "Готовые видео", "gallery": "В галерею"
+  }
+ },
+ "pl": {
+  "t1": {
+   "title": "Ustawienia komputera", "sub": "Dwa przełączniki w ustawieniach i nowa sesja",
+   "c_settings": "Otwórz ustawienia: kliknij swoje imię w lewym dolnym rogu, potem Settings",
+   "c_code": "Na liście po lewej wybierz Claude Code",
+   "c_scroll": "Przewiń w dół do sekcji Remote Control",
+   "c_first": "Włącz pierwszy przełącznik",
+   "c_middle": "Środkowy zostaw wyłączony",
+   "c_third": "Włącz trzeci przełącznik",
+   "c_after": "Po instalacji zacznij nową sesję w folderze z filmami",
+   "c_new": "Kliknij New session i wybierz folder",
+   "c_pick": "Otwórz Videos, wybierz Reels i kliknij Select folder",
+   "end_title": "Gotowe", "end_rows": ["Przełączniki Remote Control: wł., wył., wł.", "Jedna sesja w folderze z filmami", "Od teraz wszystko robisz z telefonu"],
+   "leaveOff": "nie włączaj", "name": "Twoje imię", "initial": "T"
+  },
+  "t2": {
+   "title": "Twój iPhone", "sub": "Wyślij nagrania, odbierz gotową rolkę",
+   "c_link": "Otwórz link SaveReel i stuknij przycisk dodawania na dole",
+   "c_build1": "Nie masz linku? Zbuduj skrót sam w aplikacji Skróty",
+   "c_build2": "Dodaj dwie akcje: Get Contents of URL, potem Save to Photo Album",
+   "c_build3": "Nazwij go dokładnie SaveReel",
+   "c_home1": "Otwórz stronę wysyłania w Safari i stuknij Udostępnij",
+   "c_home2": "Potem Do ekranu początkowego i Dodaj",
+   "c_up1": "Stuknij ikonę, potem Wybierz filmy lub zdjęcia",
+   "c_up2": "Pobrane nagrania często są w ostatnio zapisanych (Recently Saved)",
+   "c_up3": "Stuknij Wyślij i nie zamykaj strony, dopóki się nie skończy",
+   "c_cl1": "Otwórz aplikację Claude, potem Code i sesję swojego komputera",
+   "c_cl2": "Napisz: zmontuj",
+   "c_gal1": "Gdy będzie gotowe, stuknij Do galerii na stronie wysyłania",
+   "c_gal2": "Rolka jest już w Zdjęciach",
+   "end_title": "Na co dzień", "end_rows": ["Wyślij nagrania", "Aplikacja Claude: zmontuj", "Strona wysyłania: Do galerii"],
+   "share": "Udostępnij", "addHome": "Do ekranu początkowego", "add": "Dodaj", "photos": "Zdjęcia", "shortcutsApp": "Skróty",
+   "addShortcut": "Add Shortcut", "getContents": "Get Contents of URL", "saveToAlbum": "Save to Photo Album",
+   "actionsShort": "Get Contents of URL, Save to Photo Album",
+   "recent": "Recently Saved", "recentNote": "ostatnio zapisane", "pickDone": "Add",
+   "chat": "Chat", "command": "zmontuj", "reply": "Gotowe. Rolka czeka.", "reelName": "Moja rolka",
+   "pageTitle": "Wyślij wideo", "choose": "Wybierz filmy lub zdjęcia", "send": "Wyślij", "done": "Gotowe, wysłane", "finished": "Gotowe filmy", "gallery": "Do galerii"
+  }
+ },
+ "ui": {
+  "t1": {
+   "settings": "Settings", "code": "Claude Code", "section": "Remote Control",
+   "nav": ["General", "Account", "Privacy", "Capabilities", "Connectors", "Claude Code"],
+   "toggles": ["Connect new sessions to Remote Control", "Let your phone and claude.ai start sessions here", "Keep this computer awake for Remote Control"],
+   "newSession": "New session", "choose": "Choose a folder…", "select": "Select folder",
+   "folders": ["Desktop", "Documents", "Downloads", "Videos"], "videos": "Videos", "reels": "Reels"
+  },
+  "t2": { "linkHost": "icloud.com/shortcuts", "pageHost": "192.168.1.20" }
+ }
+}

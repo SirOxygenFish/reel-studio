@@ -155,6 +155,20 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write(body)
         elif url.path == "/api/ready":
             self.send_json(200, {"files": ready_files()})
+        elif url.path == "/icon.png":                     # Home Screen icon (apple-touch-icon)
+            f = os.path.join(os.path.dirname(HERE), ".claude-plugin", "icon.png")
+            if not os.path.isfile(f):
+                return self.fail(404, "file not found")
+            self.send_file(f, "icon.png", attach=False)
+        elif url.path == "/api/ping":                     # lets a second start see that this page already runs here
+            self.send_json(200, {"app": "reel-studio-upload", "port": PORT})
+        elif re.fullmatch(r"/howto/(en|ru|pl)\.mp4", url.path):  # the bundled iPhone tutorial, played on the page
+            f = os.path.join(HERE, "tutorials", f"tutorial2-iphone.{url.path[7:9]}.mp4")
+            if not os.path.isfile(f):
+                f = os.path.join(HERE, "tutorials", "tutorial2-iphone.en.mp4")
+            if not os.path.isfile(f):
+                return self.fail(404, "file not found")
+            self.send_file(f, os.path.basename(f), attach=False)
         elif url.path == "/download":
             self.download((parse_qs(url.query).get("f") or [""])[0])
         elif re.fullmatch(r"/v/[0-9a-f]{12}\.[a-z0-9]{2,5}", url.path):   # short ASCII address for an iPhone Shortcut
@@ -249,6 +263,10 @@ class Handler(BaseHTTPRequestHandler):
         path = os.path.join(READY, want)
         if not inside(path, READY):
             return self.fail(404, "file not found")
+        self.send_file(path, want)
+
+    def send_file(self, path, want, attach=True):
+        """one file with Range support (iPhone video players and resumed downloads need it)"""
         size = os.path.getsize(path)
         start, end = 0, size - 1
         rng = re.match(r"^bytes=(\d*)-(\d*)$", self.headers.get("Range", "").strip())
@@ -273,7 +291,8 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(end - start + 1))
         self.send_header("Accept-Ranges", "bytes")
-        self.send_header("Content-Disposition", f"attachment; filename=\"{ascii_name}\"; filename*=UTF-8''{quote(want)}")
+        if attach:
+            self.send_header("Content-Disposition", f"attachment; filename=\"{ascii_name}\"; filename*=UTF-8''{quote(want)}")
         self.end_headers()
         with open(path, "rb") as f:
             f.seek(start)
@@ -296,19 +315,34 @@ def lan_ips():
         pass
     finally:
         s.close()
-    if shutil.which("tailscale"):
+    ts = shutil.which("tailscale") or next((p for p in ("/Applications/Tailscale.app/Contents/MacOS/Tailscale",
+                                                         r"C:\Program Files\Tailscale\tailscale.exe") if os.path.exists(p)), None)
+    if ts:
         import subprocess
-        r = subprocess.run(["tailscale", "ip", "-4"], capture_output=True, text=True, timeout=5)
-        out += r.stdout.split()
+        try:
+            r = subprocess.run([ts, "ip", "-4"], capture_output=True, text=True, timeout=5)
+            out += [x for x in r.stdout.split() if x.count(".") == 3]
+        except (OSError, subprocess.SubprocessError):
+            pass
     return out or ["127.0.0.1"]
+
+
+class Server(ThreadingHTTPServer):
+    """never shares a port: on Windows SO_REUSEADDR would let a second server bind a port another program already uses"""
+    allow_reuse_address = os.name != "nt"
+    daemon_threads = True
+
+    def server_bind(self):
+        if os.name == "nt" and hasattr(socket, "SO_EXCLUSIVEADDRUSE"):
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+        super().server_bind()
 
 
 def serve(uploads, ready, port, key):
     global UPLOADS, READY, PORT, KEY
     UPLOADS, READY, PORT, KEY = str(uploads), str(ready), int(port), key
     os.makedirs(UPLOADS, exist_ok=True); os.makedirs(READY, exist_ok=True)
-    srv = ThreadingHTTPServer(("0.0.0.0", PORT), Handler)
-    srv.daemon_threads = True
+    srv = Server(("0.0.0.0", PORT), Handler)
     print("Upload page is running. Open on the phone:", flush=True)
     for ip in lan_ips():
         print(f"  http://{ip}:{PORT}/?k={KEY}", flush=True)

@@ -163,7 +163,11 @@ def main():
     sr, v = wavfile.read(src); assert sr == SR, sr
     v = v.astype(np.float64) / (32768.0 if v.dtype == np.int16 else 1.0)
     mono = v if v.ndim == 1 else v.mean(1)
-    w = int(0.4 * SR); rms = np.sqrt((mono[:len(mono) // w * w].reshape(-1, w) ** 2).mean(1)); speech = np.median(rms[rms > np.percentile(rms, 40)])
+    w = int(0.4 * SR); rms = np.sqrt((mono[:len(mono) // w * w].reshape(-1, w) ** 2).mean(1))
+    loud = rms[rms > np.percentile(rms, 40)]
+    speech = float(np.median(loud)) if len(loud) else 0.0
+    if speech < 1e-4:                                            # no voice at all (tutorials): level against a -20 dBFS speech reference
+        speech = 10 ** (-20 / 20)
     track = np.zeros(len(mono)); rng = np.random.default_rng(seed + 1)
     hits = plan(ev, seed); names = []
     for t, kind, i in hits:

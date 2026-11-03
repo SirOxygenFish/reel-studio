@@ -62,7 +62,7 @@ def main(argv):
         cl = chrome_libs(ch[0])
         row("browser libraries", not cl or not cl[0], "all present" if not cl or not cl[0] else "missing " + ", ".join(cl[0][:6]),
             "sudo apt install -y " + " ".join(cl[1]) if cl and cl[1] else "install the libraries listed (ldd " + str(ch[0]) + ")")
-    for mod in ("faster_whisper", "cv2", "scipy", "PIL", "resvg_py", "torch", "df"):
+    for mod in ("faster_whisper", "cv2", "scipy", "PIL", "resvg_py", "segno", "torch", "df"):
         r = subprocess.run([sys.executable, "-c", f"import {mod}" if mod != "df" else "import sys,types\nb=types.ModuleType('torchaudio.backend');c=types.ModuleType('torchaudio.backend.common');c.AudioMetaData=object;b.common=c\nsys.modules.setdefault('torchaudio.backend',b);sys.modules.setdefault('torchaudio.backend.common',c)\nimport df.enhance"],
                            capture_output=True, text=True, env=C.run_env())
         row("python " + mod, r.returncode == 0, "" if r.returncode == 0 else r.stderr.strip().splitlines()[-1][:120], SETUP)
@@ -80,6 +80,15 @@ def main(argv):
     row("disk space", usage.free > 3 * 1024 ** 3, f"{usage.free / 1024 ** 3:.0f} GB free", "free some space: a job needs about 2 GB")
     print("brands:", ", ".join(C.brand_list()) or "none (the neutral default look is used; /reel-brand makes one)")
     print("folders:", {k: str(v) for k, v in C.folders().items()})
+    try:                                                         # the phone side: informational, never a failure
+        import autostart, phone
+        port, key = phone.settings()
+        st = {"ours": "running", "busy": f"port {port} is used by another program (reel-tool config upload_page.port 5081)",
+              "free": "not running"}[phone.state(port, key)]
+        a = autostart.win_status() if C.IS_WIN else autostart.mac_status() if C.IS_MAC else autostart.linux_status()
+        print(f"note  upload page: {st}; autostart {a or 'off (reel-tool autostart on)'}; videos folder {C.upload_folders()['input']}")
+    except Exception as e:
+        print("note  upload page: could not check (" + str(e)[:80] + ")")
     if full:
         full_test()
     print("\nALL GOOD" if all(R) else f"\n{R.count(False)} problem(s) above")

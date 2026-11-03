@@ -99,7 +99,7 @@
   // ---------- words and time references ----------
   const norm = s => (s || '').toLowerCase().replace(/[^\p{L}\p{N}%]/gu, '');
   const WORDS = CFG.words.map(w => ({ s: w[0], e: w[1], t: w[2], n: norm(w[2]) }));
-  const SENT = [0];                                            // indices of sentence starts
+  const SENT = WORDS.length ? [0] : [];                        // indices of sentence starts (none: a wordless video, e.g. a tutorial)
   WORDS.forEach((w, i) => { if (i && /[.?!…]["”»]?$/.test(WORDS[i - 1].t)) SENT.push(i); });
   const PHRASE = WORDS.map((w, i) => i === 0 || /[,;:.?!…]["”»]?$/.test(WORDS[i - 1].t)).map((b, i) => (b ? i : -1)).filter(i => i >= 0);
   const onsets = WORDS.map(w => w.s);
@@ -563,6 +563,7 @@
     const ev = [];
     SC.forEach((s, i) => { if (!i) return; const tr = s.tin; if (tr.type === 'cut') ev.push([s.start, 'pop']); else if (tr.type !== 'blur') ev.push([s.start - tr.d / 2, 'whoosh']); });
     PUNCH.forEach((p, i) => ev.push([p, i % 2 ? 'tick' : 'pop']));          // alternate kinds; sfx.py also varies the recipe + thins
+    (CFG.board.cues || []).forEach(c => ev.push([c[0], c[1]]));             // explicit cues (tutorials: clicks), no camera punch
     return ev.filter(e => e[0] >= CFG.t0 && e[0] < CFG.t1).map(e => [+(e[0] - CFG.t0).toFixed(3), e[1]]).sort((x, y) => x[0] - y[0]);
   }
   window.RM = { def, seek, report, events, circleCheck, T, times, E, K, tw, prog, icon, kt, ktUpdate, CFG, get scenes() { return SC.map(s => ({ type: s.spec.type, start: s.start, end: s.end, tin: s.tin.type })); } };

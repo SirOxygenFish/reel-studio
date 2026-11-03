@@ -33,8 +33,12 @@ Other:
   brand ...           see brand.py
   doctor [--full]     check everything
   config [key value]  show or change the user config
-  upload-page         phone upload page
+  upload-page         phone upload page (prints the link if it already runs)
+  phone-link [--start] [--open]   the phone link + QR code (phone-link.html in the data dir)
+  autostart on [--folder DIR] [--port N] | off | status   upload page at every login, user level
+  shortcut on | off   desktop icon: starts the page and shows the phone link as a QR code
   status [job]        where a job stands
+  tutorials build|mark|gate ...   rebuild the two bundled tutorials (maintainers)
 """
 import json, runpy, subprocess, sys
 from pathlib import Path
@@ -47,7 +51,8 @@ import common as C
 
 MODS = {"scan": "scan", "analyze": "autocut", "brief": "brief", "recut": "recut", "stutter": "stutter_check", "subs": "make_subs", "render": "render",
         "gate": "gate", "deliver": "deliver", "voice": "voice_chain", "emoji": "emoji_png", "brand": "brand", "doctor": "doctor", "preview": "preview",
-        "faceless": "faceless", "upload-page": "upload", "scene-list": "scenes", "scene-kit": "scenes", "pieces": "scenes", "status": "scenes", "config": "scenes", "scene-show": "scenes", "ring": "scenes", "vote": "vote", "wordcheck": "wordcheck", "clean": "clean", "icon": "scenes", "stabilize": "stabilize", "skit-pauses": "skit_pauses"}
+        "faceless": "faceless", "upload-page": "upload", "scene-list": "scenes", "scene-kit": "scenes", "pieces": "scenes", "status": "scenes", "config": "scenes", "scene-show": "scenes", "ring": "scenes", "vote": "vote", "wordcheck": "wordcheck", "clean": "clean", "icon": "scenes", "stabilize": "stabilize", "skit-pauses": "skit_pauses",
+        "phone-link": "phone", "autostart": "autostart", "tutorials": "tutorials"}
 
 
 def main():
@@ -58,6 +63,9 @@ def main():
     if cmd in ("jump", "bestcut", "sheets", "segsheet", "mark"):
         import checks
         checks.main(cmd, rest); return
+    if cmd == "shortcut":
+        import autostart
+        autostart.shortcut_main(rest); return
     if cmd not in MODS:
         C.fail(f"unknown command {cmd}; reel-tool help lists them")
     mod = __import__(MODS[cmd])

@@ -256,6 +256,13 @@ await Promise.all(ranges.map(async ([a, b], k) => {
         const samples = [];
         for (let t = t0; t < t1; t += 0.25) samples.push([+t.toFixed(2), await w.js(`RM.report(${t})`)]);
         SAMPLES = { samples, scenes: await w.js('RM.scenes') };
+        if (SB.textSel) {                                      // smallest visible font size of the given text elements (tutorial gate)
+          const sizes = [];
+          for (let t = t0; t < t1; t += 0.5) sizes.push(await w.js(`(RM.seek(${t}), Math.min(1e9, ...[...document.querySelectorAll(${JSON.stringify(SB.textSel)})]
+            .filter(e => { const s = getComputedStyle(e), r = e.getBoundingClientRect(); return s.visibility !== 'hidden' && r.width > 4 && +s.opacity > 0.5 && e.closest('section').style.display !== 'none'; })
+            .map(e => parseFloat(getComputedStyle(e).fontSize))))`));
+          SAMPLES.textMin = Math.min(...sizes);
+        }
       }
     } catch (e) {
       console.log(`  worker ${k}: ${e.message} at frame ${i}; restarting`);
@@ -267,7 +274,7 @@ await Promise.all(ranges.map(async ([a, b], k) => {
 }));
 
 if (opt('--report') && SAMPLES) fs.writeFileSync(opt('--report'), JSON.stringify({ W, H, box, t0, t1, scenes: SAMPLES.scenes, samples: SAMPLES.samples,
-  circles: { frames: CIRCLES.n, max: CIRCLES.max, fails: CIRCLES.fails.slice(0, 200), failCount: CIRCLES.fails.length } }));
+  circles: { frames: CIRCLES.n, max: CIRCLES.max, fails: CIRCLES.fails.slice(0, 200), failCount: CIRCLES.fails.length }, textMin: SAMPLES.textMin ?? null }));
 console.log(`circle check: ${CIRCLES.n} frames, worst ${(CIRCLES.max[0] * 100).toFixed(2)} % ${CIRCLES.max[2] || ''}${CIRCLES.fails.length ? `  FAIL on ${CIRCLES.fails.length} frames` : '  ok'}`);
 const list = path.join(BUILD, 'parts.txt');
 fs.writeFileSync(list, parts.map(p => `file '${p.replace(/\\/g, '/').replace(/'/g, "'\\''")}'`).join('\n'));

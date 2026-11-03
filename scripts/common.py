@@ -15,6 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PROJECT = Path(os.environ.get("RS_PROJECT") or os.getcwd())    # where the user works; steps may chdir into the job folder
 MOTION = ROOT / "motion"
 IS_WIN = platform.system() == "Windows"
+IS_MAC = sys.platform == "darwin"
 EXE = ".exe" if IS_WIN else ""
 
 VIDEO_EXT = {".mov", ".mp4", ".m4v", ".mkv", ".webm", ".avi", ".3gp", ".mts", ".m2ts", ".hevc"}
@@ -54,7 +55,8 @@ DEFAULT_CONFIG = {
     "work_folder": None,                # None = <project>/reels-work
     "whisper_model": "large-v3",
     "voice": {"atten_db": "auto"},      # DeepFilterNet limit: auto = 16 dB, 10 dB for gated/noise-suppressed mics
-    "upload_page": {"port": 5080},
+    "upload_page": {"port": 5080},      # + key (made on first start), folder (the videos folder for the phone page)
+    "ui_lang": "auto",                  # en | ru | pl for the phone link page and shortcuts; auto = system language
     "cache_keep": 5,                    # render caches of the newest N finished jobs stay
     "cache_days": 14,                   # ...and of any job delivered in the last N days
 }
@@ -103,6 +105,106 @@ def folders(cfg=None) -> dict:
     cfg = cfg or config()
     return {"input": Path(cfg["input_folder"] or PROJECT), "output": Path(cfg["output_folder"] or PROJECT / "reels-done"),
             "work": Path(cfg["work_folder"] or PROJECT / "reels-work")}
+
+
+def upload_folders(cfg=None) -> dict:
+    """the folders the phone page serves: the videos folder chosen at install (upload_page.folder), else the project's"""
+    cfg = cfg or config(); f = (cfg.get("upload_page") or {}).get("folder")
+    if not f:
+        return folders(cfg)
+    f = Path(f)
+    return {"input": f, "output": Path(cfg["output_folder"] or f / "reels-done"), "work": Path(cfg["work_folder"] or f / "reels-work")}
+
+
+def ui_lang() -> str:
+    """en | ru | pl for texts the app shows by itself (phone link page, shortcuts): config ui_lang, else the system language"""
+    v = (config().get("ui_lang") or "auto").lower()
+    if v in ("en", "ru", "pl"):
+        return v
+    cand = [os.environ.get(k, "") for k in ("LANGUAGE", "LC_ALL", "LC_MESSAGES", "LANG")]
+    try:
+        if IS_WIN:
+            import ctypes
+            cand.insert(0, {0x19: "ru", 0x15: "pl"}.get(ctypes.windll.kernel32.GetUserDefaultUILanguage() & 0x3FF, "en"))
+        elif IS_MAC:
+            r = subprocess.run(["defaults", "read", "-g", "AppleLanguages"], capture_output=True, text=True, timeout=5)
+            cand.insert(0, re.sub(r"[^a-zA-Z_-]", " ", r.stdout).split()[0] if r.stdout.strip() else "")
+    except Exception:
+        pass
+    for c in cand:
+        c = c.lower()
+        if c.startswith(("ru", "russian")):
+            return "ru"
+        if c.startswith(("pl", "polish")):
+            return "pl"
+        if c:
+            return "en"
+    return "en"
+
+
+def desktop_dir() -> Path:
+    """the user's Desktop (OneDrive-redirected on Windows, localised on Linux, e.g. Pulpit)"""
+    try:
+        if IS_WIN:
+            r = subprocess.run(["powershell", "-NoProfile", "-Command", "[Environment]::GetFolderPath('Desktop')"], capture_output=True, text=True, timeout=20)
+            if r.stdout.strip():
+                return Path(r.stdout.strip())
+        elif not IS_MAC and shutil.which("xdg-user-dir"):
+            r = subprocess.run(["xdg-user-dir", "DESKTOP"], capture_output=True, text=True, timeout=5)
+            if r.stdout.strip():
+                return Path(r.stdout.strip())
+    except Exception:
+        pass
+    return Path.home() / "Desktop"
+
+
+def videos_dir() -> Path:
+    """a sensible default videos folder: Videos\\Reels (Windows), Movies/Reels (macOS), <XDG videos>/Reels (Linux)"""
+    if IS_MAC:
+        return Path.home() / "Movies" / "Reels"
+    base = Path.home() / "Videos"
+    if not IS_WIN and shutil.which("xdg-user-dir"):
+        try:
+            r = subprocess.run(["xdg-user-dir", "VIDEOS"], capture_output=True, text=True, timeout=5)
+            if r.stdout.strip() and Path(r.stdout.strip()) != Path.home():
+                base = Path(r.stdout.strip())
+        except Exception:
+            pass
+    return base / "Reels"
+
+
+def trash(path) -> bool:
+    """move a file or folder we made to the Recycle Bin / Trash instead of deleting it; False if it could not be moved"""
+    p = Path(path)
+    if not (p.exists() or p.is_symlink()):
+        return True
+    try:
+        if IS_WIN:
+            kind = "DeleteDirectory" if p.is_dir() else "DeleteFile"
+            ps = ("Add-Type -AssemblyName Microsoft.VisualBasic; [Microsoft.VisualBasic.FileIO.FileSystem]::"
+                  f"{kind}($env:RS_TRASH, 'OnlyErrorDialogs', 'SendToRecycleBin')")
+            subprocess.run(["powershell", "-NoProfile", "-Command", ps], env=dict(os.environ, RS_TRASH=str(p)), capture_output=True, timeout=60)
+        elif IS_MAC:
+            dst = Path.home() / ".Trash" / p.name
+            n = 2
+            while dst.exists():
+                dst = Path.home() / ".Trash" / f"{p.stem} {n}{p.suffix}"; n += 1
+            shutil.move(str(p), str(dst))
+        elif shutil.which("gio") and subprocess.run(["gio", "trash", str(p)], capture_output=True, timeout=30).returncode == 0:
+            pass
+        else:                                                    # freedesktop trash by hand
+            import time, urllib.parse
+            tr = Path(os.environ.get("XDG_DATA_HOME") or Path.home() / ".local" / "share") / "Trash"
+            (tr / "files").mkdir(parents=True, exist_ok=True); (tr / "info").mkdir(parents=True, exist_ok=True)
+            name, n = p.name, 2
+            while (tr / "files" / name).exists():
+                name = f"{p.stem}.{n}{p.suffix}"; n += 1
+            (tr / "info" / (name + ".trashinfo")).write_text(
+                f"[Trash Info]\nPath={urllib.parse.quote(str(p.resolve()))}\nDeletionDate={time.strftime('%Y-%m-%dT%H:%M:%S')}\n", encoding="utf-8")
+            shutil.move(str(p), str(tr / "files" / name))
+    except Exception:
+        return False
+    return not (p.exists() or p.is_symlink())
 
 
 def brand_list() -> list:

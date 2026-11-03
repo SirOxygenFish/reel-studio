@@ -138,7 +138,13 @@ def config(argv):
             v = json.loads(v)
         except ValueError:
             pass
-        cfg[argv[0]] = v; C.save_json(C.CONFIG_FILE, cfg)
+        *path, last = argv[0].split(".")                    # a dotted key changes one field: upload_page.port 5091
+        node = cfg
+        for k in path:
+            if not isinstance(node.get(k), dict):
+                node[k] = {}
+            node = node[k]
+        node[last] = v; C.save_json(C.CONFIG_FILE, cfg)
     print(json.dumps(C.config(), ensure_ascii=False, indent=1))
     print("data dir:", C.DATA)
 
