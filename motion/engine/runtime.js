@@ -385,7 +385,10 @@
       const A = SC[i - 1], tr = B.tin, d = tr.d;
       if (!d) continue;
       const u = clamp((t - (B.start - d / 2)) / d);
-      if (u <= 0 || u >= 1) continue;
+      // the window's edges: before the first step only the outgoing scene shows, after the last only the incoming one
+      // (skipping them left both at full opacity: a frame landing exactly on the window start flashed the next scene)
+      if (u <= 0) { B.el.style.opacity = 0; continue; }
+      if (u >= 1) { A.el.style.opacity = 0; continue; }
       const e = E.io(u), mb = Math.sin(Math.PI * u);
       if (tr.type === 'push' || tr.type === 'whip') {
         const k = tr.type === 'whip' ? 1.0 : 0.62, dist = W * k;

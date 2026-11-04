@@ -61,6 +61,7 @@
   .compose .hint { font-size:28px; color:var(--muted); margin-bottom:18px; }
   .ptr { position:absolute; left:0; top:0; width:46px; height:60px; z-index:20; pointer-events:none; }
   .rip { position:absolute; width:90px; height:90px; margin:-45px 0 0 -45px; border-radius:50%; border:6px solid var(--acc); z-index:19; opacity:0; }
+  .son1 { position:absolute; border:7px solid var(--acc); border-radius:20px; opacity:0; z-index:17; pointer-events:none; }
   .hlr { position:absolute; border:5px solid var(--acc); border-radius:20px; box-shadow:0 0 0 6px var(--acc-soft); z-index:18; opacity:0; pointer-events:none; }
   /* phone */
   .tphone { position:absolute; inset:0; border-radius:86px; background:var(--phone); padding:22px; box-shadow:var(--sh); }
@@ -156,7 +157,7 @@
       (p.caps && p.caps.length ? `<div class="cap a" style="left:${cap.l}px;top:${cap.t}px;width:${cap.w}px;font-size:${cap.fs}px">` +
         (p.step ? `<div class="badge">${esc(p.step)}</div>` : '') + `<div class="ctx">${caps}</div></div>` : '') +
       `<div class="stage a" style="left:${st.l}px;top:${st.t}px;width:${st.w}px;height:${st.h}px">${inner}` +
-      `<div class="hlr"></div><div class="rip"></div>${o.pointer === false ? '' : wd ? POINTER : '<div class="rip fing round"></div>'}</div></div>`;
+      `<div class="son1"></div><div class="son1"></div><div class="son1"></div><div class="hlr"></div><div class="rip"></div>${o.pointer === false ? '' : wd ? POINTER : '<div class="rip fing round"></div>'}</div></div>`;
   }
   const POINTER = `<svg class="ptr" viewBox="0 0 46 60"><path d="M4 3 L4 47 L15 37 L23 56 L31 52 L23 34 L39 34 Z" fill="var(--ink)" stroke="var(--paper)" stroke-width="4" stroke-linejoin="round"/></svg>`;
 
@@ -165,7 +166,7 @@
     const q = s => root.querySelector(s), qa = s => [...root.querySelectorAll(s)];
     const stage = q('.stage'), acts = (p.acts || []).slice().sort((a, b) => a.t - b.t);
     const K = k => root.querySelector(`[data-k="${k}"]`);
-    const ptr = q('.ptr'), fing = q('.rip.fing'), rip = q('.rip:not(.fing)'), hlr = q('.hlr');
+    const ptr = q('.ptr'), fing = q('.rip.fing'), rip = q('.rip:not(.fing)'), hlr = q('.hlr'), sons = qa('.son1');
     const cts = qa('.cap .ct'), capT = (p.caps || []).map(c => c[0]);
     const cap = q('.cap'), ctx = q('.cap .ctx');
     if (cap && cts.length) {                                   // the card fits its longest caption: shrink the font a little, then size the box
@@ -195,8 +196,15 @@
     const pressOnly = [...new Set(acts.filter(a => a.click).map(a => a.click))].filter(k => !shows[k] && !hides[k] && !scrolls[k]).map(K).filter(Boolean);
     return function (tg) {
       const t = tg - api.start;                                   // the engine passes video time; actions are scene time
-      // the whole screen drifts slowly by a few pixels, so a calm moment is never a frozen one
-      stage.style.transform = `translate(${(12 * Math.sin(t * 0.7 + 0.6)).toFixed(2)}px, ${(9 * Math.sin(t * 0.85)).toFixed(2)}px)`;
+      // the screen never moves (text stays sharp); pulse rings grow out of the next thing to click instead, so a calm moment is never a frozen one
+      const nx = acts.find(a => a.click && t < a.t + 0.35) || acts.filter(a => a.ring && t >= a.t - 0.01).pop() || acts.filter(a => a.click).pop();
+      const tgt = nx && K(nx.click || nx.ring);
+      sons.forEach((el, j) => {
+        if (!tgt) { el.style.opacity = 0; return; }
+        const [x, y, w, h] = rel(tgt), ph = ((t + j / 3) % 1.0), g = 10 + 85 * E.out(ph);
+        Object.assign(el.style, { left: (x - g) + 'px', top: (y - g) + 'px', width: (w + 2 * g) + 'px', height: (h + 2 * g) + 'px',
+                                  opacity: (0.8 * (1 - ph) * P(t, 0.2, 0.3)).toFixed(3), borderRadius: (16 + g) + 'px' });
+      });
       // captions: one at a time, soft cross-fade
       cts.forEach((el, i) => {
         const a = capT[i], b = i + 1 < capT.length ? capT[i + 1] : 1e9;
@@ -298,8 +306,8 @@
     return tg => {
       const t = tg - api.start;
       api.tw(tt, t, api.K.rise(0.1, 0.6)); api.tw(ts, t, api.K.rise(0.45, 0.6));
-      const u = P(t, 0.7, 0.8, 'out');
-      ar.style.opacity = u; ar.style.transform = `translateY(${((1 - u) * 60 + 10 * Math.sin(t * 1.2)).toFixed(1)}px) rotate(${(0.6 * Math.sin(t * 0.8)).toFixed(3)}deg)`;
+      const u = P(t, 0.8, 1.3, 'out');                          // the art keeps rising until the step starts
+      ar.style.opacity = u; ar.style.transform = `translate(${Math.round(12 * Math.sin(t * 0.9))}px, ${Math.round((1 - u) * 80 + 14 * Math.sin(t * 1.3))}px)`;   // whole pixels: the screen in the art stays sharp
     };
   });
 
@@ -315,7 +323,7 @@
       api.tw(tt, t, api.K.rise(0.05, 0.55));
       rs.forEach((r, i) => {
         const u = P(t, 0.35 + 0.28 * i, 0.5, 'out');
-        r.style.opacity = u; r.style.transform = `translateX(${((1 - u) * 80).toFixed(1)}px) translateY(${(4 * Math.sin(t * 1.4 + i)).toFixed(1)}px)`;
+        r.style.opacity = u; r.style.transform = `translateX(${Math.round((1 - u) * 80)}px) translateY(${Math.round(4 * Math.sin(t * 1.4 + i))}px)`;
       });
     };
   });

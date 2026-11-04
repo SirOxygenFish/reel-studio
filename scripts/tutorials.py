@@ -9,7 +9,7 @@ Tutorial 1 (PC, 16:9) goes to docs/tutorials/, Tutorial 2 (iPhone, 9:16) to uplo
 Tutorial 2 is a list of steps (one screen, one tap); its page screens are real renders of upload-page/index.html taken by
 motion/tutorials/shots.mjs against a scratch copy of the page on a free local port, so every button sits where it really is.
 The tutorial gate keeps the Reel gate's rules where they apply (format, motion never dead for > 1 s, nothing outside the frame,
-round things round, no long dashes, sound peaks, a visual review) and drops the Instagram ones (subtitle band, caption strip).
+round things round, no long dashes, sound peaks, no stray A-B-A frames, a visual review) and drops the Instagram ones (subtitle band, caption strip).
 """
 import importlib, json, os, re, secrets, shutil, subprocess, sys, threading, wave
 from pathlib import Path
@@ -116,7 +116,7 @@ def storyboard(tut, lang):
     for sc in sp["scenes"]:
         s = resolve({k: v for k, v in sc.items()}, tb)
         s["labels"] = tb
-        s["camera"] = {"z0": 1.0, "z1": 1.025}                  # calm: a slow push-in only
+        s["camera"] = {"still": True}                            # no push-in, drift or tilt: text stays sharp
         for a in s.get("acts", []):
             if "click" in a:
                 cues.append([round(sc["at"] + a["t"], 3), "tick"])
@@ -195,6 +195,8 @@ def gate(tut, lang):
     add("calm but never still", m.get("median", 0) >= WANT["motion"] and not qc.get("dead_runs"),
         f"motion median {m.get('median')} (>= {WANT['motion']}), dead stretches > {WANT['dead']} s: {qc.get('dead_runs') or 'none'}")
     add("inside the frame", qc.get("safe_issue_count", 0) == 0, f"{qc.get('safe_issue_count', '?')} issues")
+    fl = qc.get("flash_frames")
+    add("no flash frames", fl == [], "none" if fl == [] else (f"stray frames at {[f['t'] for f in fl][:8]} s" if fl else "not measured: rerun qc"))
     c = qc.get("circles") or {}
     add("circles stay round", c and not c.get("fail_frames"), f"{c.get('frames', '?')} frames, worst {round(100 * (c.get('worst') or [0])[0], 2)} %")
     tm = rep.get("textMin"); need = WANT["caption_px"][tut]

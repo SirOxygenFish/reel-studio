@@ -1,12 +1,14 @@
 """ReelsMotion quality checks.
     python qc.py <video.mp4> [--report report.json] [--every 2] [--dead 1.0] [--thr 0.25] [--sub 1240,1510] [--out <dir>]
     python qc.py <hybrid.mp4> --visuals visuals.json [--name "Reel"]   (hybrid: reports of the current render + VARIETY check)
+    python qc.py --flash <video> [<video> ...]   only the stray-frame check (A-B-A frames), read-only
 Writes <out>/<name>_qc.json and <name>_qc_sheet.jpg and prints a summary:
   motion      per-frame motion energy (mean abs difference of consecutive frames, 0-255 scale) in the graphics area
               (subtitle band and Instagram's bottom strip excluded, so changing subtitles never count as motion)
   dead        runs where motion stays under --thr for longer than --dead seconds ("nothing moves")
   coverage    share of the safe box covered by content boxes (from the renderer's --report); target 0.6-0.7
   safe        content boxes inside the subtitle band, outside the frame, or under Instagram's top strip
+  flash       stray frames: one frame unlike both neighbours while the neighbours match (A-B-A)
 Only numpy + Pillow; ffmpeg from the Reel Studio setup.
 """
 import json, os, subprocess, sys
@@ -46,6 +48,40 @@ def motion(src, W, H, sub, fps_in):
         mask[int(1560 / 8):] = False                              # Instagram caption/buttons strip
     d = np.abs(np.diff(fr, axis=0))[:, mask].mean(1)
     return np.concatenate([[d[0] if len(d) else 0], d]), 15.0
+
+
+FLASH_MIN, FLASH_BACK = 3.0, 0.25
+
+
+def flash_frames(src, W, H, fps):
+    """A-B-A frames at the native frame rate: frame i differs from both neighbours by more than FLASH_MIN while the neighbours
+    match each other (their difference under FLASH_BACK of that). A cut or a fade never looks like this; a stray frame does."""
+    w, h = W // 4, H // 4
+    raw = subprocess.run([FF, "-v", "error", "-i", src, "-vf", f"scale={w}:{h}:flags=area,format=gray", "-f", "rawvideo", "-"],
+                         capture_output=True, check=True).stdout
+    fr = np.frombuffer(raw, np.uint8).reshape(-1, h, w)
+    out = []
+    for i in range(1, len(fr) - 1):
+        a, b, c = (fr[j].astype(np.int16) for j in (i - 1, i, i + 1))
+        dp, dn = np.abs(b - a).mean(), np.abs(b - c).mean()
+        if min(dp, dn) < FLASH_MIN:
+            continue
+        back = np.abs(c - a).mean()
+        if back < FLASH_BACK * min(dp, dn):
+            out.append({"frame": i, "t": round(i / fps, 3), "diff": round(float(min(dp, dn)), 2), "back": round(float(back), 2)})
+    return out
+
+
+def flash_main():
+    """python qc.py --flash <video> [<video> ...]   only the stray-frame check (read-only on the videos)"""
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    bad = 0
+    for src in [a for a in sys.argv[1:] if not a.startswith("--")]:
+        W, H, fps, dur = probe(src)
+        ff = flash_frames(src, W, H, fps)
+        bad += len(ff)
+        print(f"{len(ff)} flash frames  {dur:6.1f} s  {os.path.basename(src)}" + ("".join(f"\n    frame {f['frame']} ({f['t']} s) diff {f['diff']} back {f['back']}" for f in ff[:20])))
+    sys.exit(1 if bad else 0)
 
 
 def runs(t, ok, min_len):
@@ -129,6 +165,7 @@ def main():
     res = {"video": src, "duration": round(dur, 2), "motion": {"median": round(float(np.median(e)), 3), "p10": round(float(np.percentile(e, 10)), 3),
            "p90": round(float(np.percentile(e, 90)), 3), "still_share": round(float((e < thr).mean()), 3)}, "dead_runs": dead,
            "thr": thr, "dead_len": dead_len}
+    res["flash_frames"] = flash_frames(src, W, H, fps)
     rp = arg("--report")
     vj = arg("--visuals")                                       # hybrid: segment reports of THIS render + the variety check
     if vj and not rp and os.path.exists(os.path.join(os.path.dirname(os.path.abspath(vj)), "_motion", "current.json")):
@@ -155,7 +192,7 @@ def main():
     json.dump(res, open(os.path.join(out_dir, base + "_qc.json"), "w"), indent=1)
     m = res["motion"]
     print(f"QC {base}: {dur:.1f} s | motion median {m['median']} p10 {m['p10']} | still {m['still_share']*100:.0f} % | "
-          f"dead runs (> {dead_len} s): {dead or 'none'}")
+          f"dead runs (> {dead_len} s): {dead or 'none'} | flash frames: {[f['t'] for f in res['flash_frames']] or 'none'}")
     if "coverage" in res:
         c = res["coverage"]
         print(f"   coverage mean {c['mean']*100:.0f} % min {c['min']*100:.0f} % (under 40 %: {c['under_40']*100:.0f} % of samples) | "
@@ -182,4 +219,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    flash_main() if "--flash" in sys.argv else main()
