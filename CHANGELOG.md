@@ -20,6 +20,8 @@ For people who only use their phone.
 ### Engine
 - Storyboards without words (tutorials), explicit sound cues, a fixed sound reference when there is no voice
 - A plain `fade` transition and a still camera (`camera.still`) for screens with text to read
+- Fixed: a frame landing exactly on the start of a transition showed the next scene for one frame (A-B-A flash)
+- `qc.py` reports stray A-B-A frames on every run; `qc.py --flash <videos>` checks any video read-only
 - `qc.py --tutorial`: the Instagram-only zones are skipped; frame sheets keep the video's shape
 
 ## 1.0.0 (2026-11-02)
