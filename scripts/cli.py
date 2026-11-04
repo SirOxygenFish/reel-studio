@@ -39,6 +39,7 @@ Other:
   shortcut on | off   desktop icon: starts the page and shows the phone link as a QR code
   status [job]        where a job stands
   tutorials build|mark|gate ...   rebuild the two bundled tutorials (maintainers)
+  savereel build|sign|check ...   the signed iPhone Shortcut SaveReel served by the upload page (maintainers)
 """
 import json, runpy, subprocess, sys
 from pathlib import Path
@@ -52,7 +53,7 @@ import common as C
 MODS = {"scan": "scan", "analyze": "autocut", "brief": "brief", "recut": "recut", "stutter": "stutter_check", "subs": "make_subs", "render": "render",
         "gate": "gate", "deliver": "deliver", "voice": "voice_chain", "emoji": "emoji_png", "brand": "brand", "doctor": "doctor", "preview": "preview",
         "faceless": "faceless", "upload-page": "upload", "scene-list": "scenes", "scene-kit": "scenes", "pieces": "scenes", "status": "scenes", "config": "scenes", "scene-show": "scenes", "ring": "scenes", "vote": "vote", "wordcheck": "wordcheck", "clean": "clean", "icon": "scenes", "stabilize": "stabilize", "skit-pauses": "skit_pauses",
-        "phone-link": "phone", "autostart": "autostart", "tutorials": "tutorials"}
+        "phone-link": "phone", "autostart": "autostart", "tutorials": "tutorials", "savereel": "savereel"}
 
 
 def main():

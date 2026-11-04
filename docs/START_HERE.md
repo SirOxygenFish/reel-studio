@@ -29,11 +29,10 @@ The computer does the work, so it has to be switched on with the Claude app open
 
 ## 3. On the iPhone, once
 
-1. **Add the SaveReel shortcut.** It saves a finished Reel into Photos.
-   - If you were given a SaveReel link: open it on the iPhone and tap **Add Shortcut**.
-   - Otherwise build it (2 minutes): open **Shortcuts**, tap **+**, add the action **Get Contents of URL** (search for "URL") and set its address to **Shortcut Input**, add the action **Save to Photo Album** (search for "album"), then rename the shortcut to exactly **SaveReel**. The first time it runs, tap **Allow**.
-2. **Put the upload page on the Home Screen.** At the end of the install, the computer showed a QR code (the desktop icon **Reel Studio phone link** shows it again). Scan it with the iPhone camera, open the page in Safari, tap **Share**, then **Add to Home Screen**, then **Add**. The phone must be on the same Wi-Fi as the computer.
-3. **Watch Tutorial 2**: on the upload page, tap **How to**. It plays from your computer, in the page's language.
+1. **Open the upload page.** At the end of the install, the computer showed a QR code (the desktop icon **Reel Studio phone link** shows it again). Scan it with the iPhone camera and open the page in Safari. The phone must be on the same Wi-Fi as the computer.
+2. **Add SaveReel.** It saves a finished Reel into Photos. On the page, tap **Install SaveReel**, then **Add Shortcut** at the bottom. The first time it runs, tap **Allow**. If nothing opens, tap **Does not open? Download the file** under the button, then open the downloaded file. If even that fails, see the last section of this page.
+3. **Put the page on the Home Screen.** Still in Safari, tap **Share**, then **Add to Home Screen**, then **Add**.
+4. **Watch Tutorial 2**: on the upload page, tap **How to**. It plays from your computer, in the page's language.
 
 ## 4. Optional: away from home
 
@@ -46,3 +45,12 @@ The upload page only answers at home, on your own Wi-Fi. To use it anywhere, ins
 3. Write: **make a Reel** (add anything special you want).
 4. Wait for Claude to say it is done.
 5. Upload page: **To gallery**. The Reel is in Photos.
+
+## Last resort: build SaveReel by hand
+
+Only if **Install SaveReel** did not work.
+
+1. Open **Shortcuts** and tap **+**.
+2. Add the action **Get Contents of URL** (search for "URL") and set its address to **Shortcut Input**.
+3. Add the action **Save to Photo Album** (search for "album").
+4. Rename the shortcut to exactly **SaveReel**. The first time it runs, tap **Allow**.

@@ -366,23 +366,15 @@
   const thumbs = (n, sel = [], cls = '') => Array.from({ length: n }, (_, i) =>
     `<div class="th ${['', 'b', 'c'][i % 3]} ${cls}" ${sel.includes(i) ? `data-k="th${i}"` : ''}><div class="ck round"></div><div class="du">0:${String(12 + i * 7).slice(-2)}</div></div>`).join('');
 
-  RM.def('t2_link', (api, root) => {
+  // SaveReel in one step: the page's Install button opens the Shortcuts import sheet, Add Shortcut, done
+  RM.def('t2_install', (api, root) => {
     const p = api.p, L = p.labels;
-    const scr = `<div class="urlbar">${esc(L.linkHost)}</div><div class="scrn" style="padding-top:220px">` +
-      `<div class="pcard" data-k="link" style="display:flex;align-items:center;gap:24px"><div class="act" style="padding:0;border:0;background:none"><div class="ag"></div></div><div><b>SaveReel</b><div class="ptext">${esc(L.linkHost)}</div></div></div>` +
-      `${phs(3)}</div>` +
+    const scr = `<div class="urlbar">${esc(L.pageHost)}</div><div class="scrn" style="padding-top:210px"><div class="ptitle">${esc(L.pageTitle)}</div>` +
+      `<div class="pcard"><div class="pbtn" data-k="install">${esc(L.install)}</div>${phs(1)}</div>` +
+      `<div class="pbtn ghost">${esc(L.choose)}</div>${phs(2)}</div>` +
       `<div class="sheet" data-k="sheet" data-from="bottom"><div class="grab"></div><div style="display:flex;align-items:center;gap:26px"><div class="act" style="padding:0;border:0;background:none"><div class="ag" style="width:110px;height:110px;border-radius:26px"></div></div>` +
       `<div class="ptitle">SaveReel</div></div><div class="ptext">${esc(L.actionsShort)}</div><div class="pbtn" data-k="add">${esc(L.addShortcut)}</div></div>` +
       `<div class="banner" data-k="done"><div class="sq"></div>SaveReel<div class="tick round"></div></div>`;
-    root.innerHTML = frame(p, phone(scr));
-    return player(api, root, p);
-  });
-
-  RM.def('t2_build', (api, root) => {
-    const p = api.p, L = p.labels;
-    const scr = `<div class="scrn"><div class="ptext">${esc(L.shortcutsApp)}</div><div class="field" data-k="name"></div>` +
-      `<div class="act" data-k="a1"><div class="ag"></div>${esc(L.getContents)}</div>` +
-      `<div class="act" data-k="a2"><div class="ag b"></div>${esc(L.saveToAlbum)}</div></div>`;
     root.innerHTML = frame(p, phone(scr));
     return player(api, root, p);
   });

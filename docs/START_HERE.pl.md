@@ -31,11 +31,10 @@ Pracę wykonuje komputer, więc kiedy wysyłasz nagrania, musi być włączony, 
 
 ## 3. Na iPhonie, jednorazowo
 
-1. **Dodaj skrót SaveReel.** Zapisuje gotową rolkę w Zdjęciach.
-   - Jeśli masz link do SaveReel: otwórz go na iPhonie i stuknij przycisk dodawania na dole.
-   - Jeśli nie, zbuduj go sam (2 minuty): otwórz aplikację Skróty, stuknij **+**, dodaj akcję **Get Contents of URL** (na polskim iPhonie nazwa jest przetłumaczona, szukaj słowa „URL”) i w polu adresu wybierz **dane wejściowe skrótu**. Potem dodaj akcję **Save to Photo Album** (szukaj słowa „album”) i zmień nazwę skrótu dokładnie na **SaveReel**. Przy pierwszym uruchomieniu stuknij Pozwól.
-2. **Dodaj stronę wysyłania do ekranu początkowego.** Na koniec instalacji komputer pokazał kod QR (ikona **Reel Studio na telefon** na pulpicie pokaże go znowu). Skieruj na niego aparat iPhone'a, otwórz stronę w Safari, stuknij Udostępnij, potem Do ekranu początkowego i Dodaj. Telefon musi być w tej samej sieci Wi-Fi co komputer.
-3. **Obejrzyj film 2**: na stronie wysyłania stuknij **Jak to działa**. Film odtwarza się z Twojego komputera, w języku strony.
+1. **Otwórz stronę wysyłania.** Na koniec instalacji komputer pokazał kod QR (ikona **Reel Studio na telefon** na pulpicie pokaże go znowu). Skieruj na niego aparat iPhone'a i otwórz stronę w Safari. Telefon musi być w tej samej sieci Wi-Fi co komputer.
+2. **Dodaj SaveReel.** Ten skrót zapisuje gotową rolkę w Zdjęciach. Na stronie stuknij **Zainstaluj SaveReel**, potem przycisk dodawania na dole. Przy pierwszym uruchomieniu stuknij Pozwól. Jeśli nic się nie otworzy, stuknij **Nie otwiera się? Pobierz plik** pod przyciskiem i otwórz pobrany plik. Jeśli i to nie pomoże, zajrzyj do ostatniej części tej strony.
+3. **Dodaj stronę do ekranu początkowego.** Nadal w Safari stuknij Udostępnij, potem Do ekranu początkowego i Dodaj.
+4. **Obejrzyj film 2**: na stronie wysyłania stuknij **Jak to działa**. Film odtwarza się z Twojego komputera, w języku strony.
 
 ## 4. Opcjonalnie: poza domem
 
@@ -48,3 +47,12 @@ Strona wysyłania działa tylko w domu, w Twojej sieci Wi-Fi. Żeby korzystać z
 3. Napisz: **zmontuj** (i czego jeszcze sobie życzysz).
 4. Poczekaj, aż Claude napisze, że gotowe.
 5. Strona wysyłania: **Do galerii**. Rolka jest w Zdjęciach.
+
+## Ostateczność: zbuduj SaveReel ręcznie
+
+Tylko jeśli **Zainstaluj SaveReel** nie zadziałało.
+
+1. Otwórz aplikację Skróty i stuknij **+**.
+2. Dodaj akcję **Get Contents of URL** (na polskim iPhonie nazwa jest przetłumaczona, szukaj słowa „URL”) i w polu adresu wybierz **dane wejściowe skrótu**.
+3. Dodaj akcję **Save to Photo Album** (szukaj słowa „album”).
+4. Zmień nazwę skrótu dokładnie na **SaveReel**. Przy pierwszym uruchomieniu stuknij Pozwól.

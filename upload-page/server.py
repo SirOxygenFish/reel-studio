@@ -169,6 +169,11 @@ class Handler(BaseHTTPRequestHandler):
             if not os.path.isfile(f):
                 return self.fail(404, "file not found")
             self.send_file(f, os.path.basename(f), attach=False)
+        elif re.fullmatch(r"/shortcut/(en|ru|pl)/SaveReel\.shortcut", url.path):   # the signed iPhone Shortcut (one tap to add)
+            f = os.path.join(HERE, "shortcut", url.path[10:12], "SaveReel.shortcut")
+            if not os.path.isfile(f):
+                return self.fail(404, "file not found")
+            self.send_file(f, "SaveReel.shortcut")
         elif url.path == "/download":
             self.download((parse_qs(url.query).get("f") or [""])[0])
         elif re.fullmatch(r"/v/[0-9a-f]{12}\.[a-z0-9]{2,5}", url.path):   # short ASCII address for an iPhone Shortcut
@@ -286,7 +291,7 @@ class Handler(BaseHTTPRequestHandler):
         else:
             self.send_response(200)
         ext = os.path.splitext(want)[1].lower()
-        ctype = {".mp4": "video/mp4", ".mov": "video/quicktime", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png"}.get(ext, "application/octet-stream")
+        ctype = {".shortcut": "application/octet-stream", ".mp4": "video/mp4", ".mov": "video/quicktime", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png"}.get(ext, "application/octet-stream")
         ascii_name = re.sub(r"[^A-Za-z0-9._ -]", "_", want)
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(end - start + 1))

@@ -17,10 +17,9 @@
   },
   "t2": {
    "title": "Your iPhone", "sub": "Send clips, get the Reel back",
-   "c_link": "Open the SaveReel link and tap the add button at the bottom",
-   "c_build1": "No link? Build it yourself in the Shortcuts app",
-   "c_build2": "Add two actions: Get Contents of URL, then Save to Photo Album",
-   "c_build3": "Name it exactly SaveReel",
+   "c_install1": "Open the upload page and tap Install SaveReel",
+   "c_install2": "Then tap Add Shortcut at the bottom",
+   "install": "Install SaveReel",
    "c_home1": "Open the upload page in Safari and tap Share",
    "c_home2": "Then Add to Home Screen, and Add",
    "c_up1": "Tap the icon, then Choose videos or photos",
@@ -32,7 +31,7 @@
    "c_gal2": "The Reel is in Photos",
    "end_title": "Every day", "end_rows": ["Upload the clips", "Claude app: make a Reel", "Upload page: To gallery"],
    "share": "Share", "addHome": "Add to Home Screen", "add": "Add", "photos": "Photos", "shortcutsApp": "Shortcuts",
-   "addShortcut": "Add Shortcut", "getContents": "Get Contents of URL", "saveToAlbum": "Save to Photo Album",
+   "addShortcut": "Add Shortcut",
    "actionsShort": "Get Contents of URL, Save to Photo Album",
    "recent": "Recently Saved", "recentNote": "clips you downloaded", "pickDone": "Add",
    "chat": "Chat", "command": "make a Reel", "reply": "Done. Your Reel is ready.", "reelName": "My Reel",
@@ -56,10 +55,9 @@
   },
   "t2": {
    "title": "Ваш iPhone", "sub": "Отправить ролики и получить готовый рилс",
-   "c_link": "Откройте ссылку SaveReel и нажмите кнопку добавления внизу",
-   "c_build1": "Нет ссылки? Соберите команду сами в приложении «Быстрые команды»",
-   "c_build2": "Добавьте два действия: Get Contents of URL, затем Save to Photo Album",
-   "c_build3": "Назовите её точно так: SaveReel",
+   "c_install1": "Откройте страницу загрузки и нажмите «Установить SaveReel»",
+   "c_install2": "Затем нажмите кнопку добавления внизу",
+   "install": "Установить SaveReel",
    "c_home1": "Откройте страницу загрузки в Safari и нажмите «Поделиться»",
    "c_home2": "Затем «На экран „Домой“» и «Добавить»",
    "c_up1": "Нажмите на значок, затем «Выбрать видео или фото»",
@@ -71,7 +69,7 @@
    "c_gal2": "Рилс уже в «Фото»",
    "end_title": "Каждый день", "end_rows": ["Загрузите ролики", "Приложение Claude: монтируй", "Страница загрузки: В галерею"],
    "share": "Поделиться", "addHome": "На экран «Домой»", "add": "Добавить", "photos": "Фото", "shortcutsApp": "Быстрые команды",
-   "addShortcut": "Add Shortcut", "getContents": "Get Contents of URL", "saveToAlbum": "Save to Photo Album",
+   "addShortcut": "Add Shortcut",
    "actionsShort": "Get Contents of URL, Save to Photo Album",
    "recent": "Recently Saved", "recentNote": "недавно сохранённые", "pickDone": "Add",
    "chat": "Chat", "command": "монтируй", "reply": "Готово. Рилс готов.", "reelName": "Мой рилс",
@@ -95,10 +93,9 @@
   },
   "t2": {
    "title": "Twój iPhone", "sub": "Wyślij nagrania, odbierz gotową rolkę",
-   "c_link": "Otwórz link SaveReel i stuknij przycisk dodawania na dole",
-   "c_build1": "Nie masz linku? Zbuduj skrót sam w aplikacji Skróty",
-   "c_build2": "Dodaj dwie akcje: Get Contents of URL, potem Save to Photo Album",
-   "c_build3": "Nazwij go dokładnie SaveReel",
+   "c_install1": "Otwórz stronę wysyłania i stuknij Zainstaluj SaveReel",
+   "c_install2": "Potem stuknij przycisk dodawania na dole",
+   "install": "Zainstaluj SaveReel",
    "c_home1": "Otwórz stronę wysyłania w Safari i stuknij Udostępnij",
    "c_home2": "Potem Do ekranu początkowego i Dodaj",
    "c_up1": "Stuknij ikonę, potem Wybierz filmy lub zdjęcia",
@@ -110,7 +107,7 @@
    "c_gal2": "Rolka jest już w Zdjęciach",
    "end_title": "Na co dzień", "end_rows": ["Wyślij nagrania", "Aplikacja Claude: zmontuj", "Strona wysyłania: Do galerii"],
    "share": "Udostępnij", "addHome": "Do ekranu początkowego", "add": "Dodaj", "photos": "Zdjęcia", "shortcutsApp": "Skróty",
-   "addShortcut": "Add Shortcut", "getContents": "Get Contents of URL", "saveToAlbum": "Save to Photo Album",
+   "addShortcut": "Add Shortcut",
    "actionsShort": "Get Contents of URL, Save to Photo Album",
    "recent": "Recently Saved", "recentNote": "ostatnio zapisane", "pickDone": "Add",
    "chat": "Chat", "command": "zmontuj", "reply": "Gotowe. Rolka czeka.", "reelName": "Moja rolka",
@@ -125,6 +122,6 @@
    "newSession": "New session", "choose": "Choose a folder…", "select": "Select folder",
    "folders": ["Desktop", "Documents", "Downloads", "Videos"], "videos": "Videos", "reels": "Reels"
   },
-  "t2": { "linkHost": "icloud.com/shortcuts", "pageHost": "192.168.1.20" }
+  "t2": { "pageHost": "192.168.1.20" }
  }
 }

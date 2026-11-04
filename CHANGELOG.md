@@ -11,6 +11,7 @@ For people who only use their phone.
 
 ### Phone
 - Upload page in English, Russian and Polish, picked from the phone's language, with a How to button and a Home Screen icon
+- SaveReel in one tap: the page serves a signed SaveReel shortcut (Install SaveReel, then Add Shortcut); without it, a share-sheet Save to Photos over HTTPS or a plain download with four steps. `reel-tool savereel build|sign|check` rebuilds and re-signs it on a Mac
 - `reel-tool autostart on|off|status`: the page starts at every login without a session (Task Scheduler or the Startup folder on Windows, a LaunchAgent on macOS, systemd --user or desktop autostart on Linux), user level only
 - `reel-tool shortcut on|off`: a desktop icon that starts the page and shows the phone link as a QR code
 - `reel-tool phone-link`: the link plus a QR code in the terminal and as a page
