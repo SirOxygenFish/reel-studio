@@ -32,7 +32,7 @@ Pracę wykonuje komputer, więc kiedy wysyłasz nagrania, musi być włączony, 
 ## 3. Na iPhonie, jednorazowo
 
 1. **Otwórz stronę wysyłania.** Na koniec instalacji komputer pokazał kod QR (ikona **Reel Studio na telefon** na pulpicie pokaże go znowu). Skieruj na niego aparat iPhone'a i otwórz stronę w Safari. Telefon musi być w tej samej sieci Wi-Fi co komputer.
-2. **Dodaj SaveReel.** Ten skrót zapisuje gotową rolkę w Zdjęciach. Na stronie stuknij **Zainstaluj SaveReel**, potem przycisk dodawania na dole. Przy pierwszym uruchomieniu stuknij Pozwól. Jeśli nic się nie otworzy, stuknij **Nie otwiera się? Pobierz plik** pod przyciskiem i otwórz pobrany plik. Jeśli i to nie pomoże, zajrzyj do ostatniej części tej strony.
+2. **Dodaj SaveReel.** Ten skrót zapisuje gotową rolkę w Zdjęciach. Na stronie stuknij **Zainstaluj SaveReel**. Safari zapyta, czy otworzyć plik w Skrótach: stuknij Otwórz, potem przycisk dodawania na dole i Gotowe. Gdy pierwszy raz stukniesz **Do galerii**, iPhone zapyta o dostęp: zezwól na stałe (przycisk Always Allow na angielskim iPhonie). Jeśli to nie zadziała, zajrzyj do ostatniej części tej strony.
 3. **Dodaj stronę do ekranu początkowego.** Nadal w Safari stuknij Udostępnij, potem Do ekranu początkowego i Dodaj.
 4. **Obejrzyj film 2**: na stronie wysyłania stuknij **Jak to działa**. Film odtwarza się z Twojego komputera, w języku strony.
 

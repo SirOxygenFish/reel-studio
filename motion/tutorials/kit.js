@@ -291,7 +291,7 @@
   RM.def('tut_title', (api, root) => {
     const p = api.p, wd = wide();
     const art = wd ? `<div class="sk a" style="left:${W() / 2 - 300}px;top:560px;width:600px;height:370px"><div class="win" style="border-radius:18px"><div class="bar"><div class="dot round"></div><div class="dot round"></div><div class="dot round"></div></div><div class="body"><div class="tside" style="width:150px"></div><div class="main">${phs(4).replace(/class="tph"/g, 'class="tph" data-ph')}</div></div></div></div>`
-                   : `<div class="sk a" style="left:${W() / 2 - 210}px;top:900px;width:420px;height:850px"><div class="tphone" style="border-radius:60px;padding:16px"><div class="scr" style="inset:16px;border-radius:46px"><div class="scrn" style="padding-top:90px">${phs(5)}</div></div><div class="pill" style="top:30px;width:110px;height:30px;margin-left:-55px"></div></div></div>`;
+                   : `<div class="sk a" style="left:${W() / 2 - 210}px;top:900px;width:420px;height:850px"><div class="tphone" style="border-radius:60px;padding:16px"><div class="scr" style="inset:16px;border-radius:46px">${p.src ? `<img src="${p.src}" style="position:absolute;left:0;top:13%;width:100%">` : `<div class="scrn" style="padding-top:90px">${phs(5)}</div>`}</div><div class="pill" style="top:30px;width:110px;height:30px;margin-left:-55px"></div></div></div>`;
     root.innerHTML = `<div class="tut"><div class="ttl a" style="left:60px;right:60px;top:${wd ? 170 : 330}px;font-size:${wd ? 104 : 104}px">${esc(p.title)}</div>` +
       `<div class="tsub a" style="left:80px;right:80px;top:${wd ? 330 : 600}px;font-size:${wd ? 50 : 56}px">${esc(p.sub)}</div>${art}</div>`;   // the art itself is the tweened box (a full-width wrapper would rotate into a phantom box)
     const [tt, ts, ar] = root.querySelectorAll('.a');
@@ -362,86 +362,229 @@
   });
 
   // ---------- Tutorial 2: the iPhone ----------
-  const phone = inner => `<div class="tphone"><div class="scr">${inner}</div><div class="pill"></div></div>`;
-  const thumbs = (n, sel = [], cls = '') => Array.from({ length: n }, (_, i) =>
-    `<div class="th ${['', 'b', 'c'][i % 3]} ${cls}" ${sel.includes(i) ? `data-k="th${i}"` : ''}><div class="ck round"></div><div class="du">0:${String(12 + i * 7).slice(-2)}</div></div>`).join('');
+  // One step = one screen and one tap. The phone is an iPhone 11 Pro screen in its own units (375 x 812 CSS px), scaled up once
+  // and never moved, so text stays sharp. Page screens are real renders of the upload page (scripts/tutorials.py -> shots.mjs);
+  // iOS screens are clean drawings laid out after real iOS 18 screenshots (no icons copied, no logos).
+  const S2 = 1.92, PW = 375, PH = 812, BZ = 14;                  // scale, screen size, bezel (video px)
+  const VIEW = [109, 619];                                         // page viewport: top and height inside the screen
+  const CSS2 = `
+  .p2 { position:absolute; background:var(--phone); border-radius:${39 * S2 + BZ}px; box-shadow:var(--sh); }
+  .p2 .s2 { position:absolute; left:${BZ}px; top:${BZ}px; width:${PW}px; height:${PH}px; transform:scale(${S2}); transform-origin:0 0;
+            border-radius:39px; overflow:hidden; background:#fff; font-family:-apple-system,"SF Pro Text","Inter","Segoe UI",Roboto,Arial,sans-serif; color:#111; }
+  .s2 * { box-sizing:border-box; }
+  .s2 .ab { position:absolute; }
+  .s2 .sb { position:absolute; left:0; right:0; top:0; height:50px; font-size:15px; font-weight:600; }
+  .s2 .sb .tm { position:absolute; left:30px; top:13px; }
+  .s2 .sb .bk { position:absolute; left:18px; top:31px; font-size:11px; font-weight:600; }
+  .s2 .sb .ind { position:absolute; right:22px; top:16px; display:flex; gap:5px; align-items:flex-end; }
+  .s2 .sb .ind i { display:block; width:3px; background:currentColor; border-radius:1px; }
+  .s2 .sb .bat { width:24px; height:12px; border:1.5px solid currentColor; border-radius:3px; margin-left:4px; position:relative; }
+  .s2 .sb .bat:after { content:''; position:absolute; left:1.5px; top:1.5px; width:12px; height:6px; background:currentColor; border-radius:1px; }
+  .s2 .blue { color:#0a7cff; }
+  .s2 .topb { position:absolute; left:0; right:0; top:50px; height:59px; background:#f4f4f6; border-radius:12px 12px 0 0; border-bottom:.5px solid #d4d4d8; }
+  .s2 .topb .dn { position:absolute; left:14px; top:20px; font-size:17px; color:#0a7cff; }
+  .s2 .topb .host { position:absolute; left:0; right:0; top:19px; text-align:center; font-size:17px; font-weight:600; }
+  .s2 .topb .ic { position:absolute; top:18px; width:22px; height:22px; border:2px solid #0a7cff; border-radius:5px; }
+  .s2 .topb .ic.r { border-radius:50%; border-right-color:transparent; }
+  .s2 .tool { position:absolute; left:0; right:0; top:728px; bottom:0; background:#f4f4f6; border-top:.5px solid #d4d4d8; }
+  .s2 .chev { position:absolute; top:16px; width:14px; height:14px; border-left:2.5px solid #0a7cff; border-bottom:2.5px solid #0a7cff; transform:rotate(45deg); }
+  .s2 .chev.f { transform:rotate(-135deg); border-color:#b9b9c0; }
+  .s2 .shr { position:absolute; top:9px; width:24px; height:30px; }
+  .s2 .shr .bx { position:absolute; left:0; right:0; bottom:0; height:18px; border:2.2px solid #0a7cff; border-top:0; border-radius:0 0 4px 4px; }
+  .s2 .shr .bx:before, .s2 .shr .bx:after { content:''; position:absolute; top:-2px; width:5px; border-top:2.2px solid #0a7cff; }
+  .s2 .shr .bx:before { left:-2px; } .s2 .shr .bx:after { right:-2px; }
+  .s2 .shr .st { position:absolute; left:11px; top:0; width:2.2px; height:19px; background:#0a7cff; }
+  .s2 .shr .hd { position:absolute; left:7px; top:1px; width:10px; height:10px; border-left:2.2px solid #0a7cff; border-top:2.2px solid #0a7cff; transform:rotate(45deg); }
+  .s2 .cmp { position:absolute; top:12px; width:26px; height:26px; border:2.2px solid #0a7cff; border-radius:50%; }
+  .s2 .cmp:after { content:''; position:absolute; left:9px; top:4px; width:4px; height:14px; background:#0a7cff; transform:rotate(45deg); border-radius:2px; }
+  .s2 .homei { position:absolute; left:120px; width:135px; bottom:8px; height:5px; border-radius:3px; background:#111; }
+  .s2 .shot { position:absolute; left:0; top:${VIEW[0]}px; width:${PW}px; height:${VIEW[1]}px; }
+  .s2 .dim { position:absolute; inset:0; background:rgba(0,0,0,.32); }
+  .s2 .sheet2 { position:absolute; left:0; right:0; bottom:0; background:#f2f2f7; border-radius:14px 14px 0 0; }
+  .s2 .grp { background:#fff; border-radius:12px; margin:0 16px; overflow:hidden; }
+  .s2 .grp .li { height:50px; display:flex; align-items:center; padding:0 16px; font-size:17px; border-top:.5px solid #d4d4d8; gap:12px; }
+  .s2 .grp .li:first-child { border-top:0; }
+  .s2 .grp .li .g { width:22px; height:22px; border:2px solid #111; border-radius:5px; margin-left:auto; flex:none; }
+  .s2 .btn2 { position:absolute; display:flex; align-items:center; justify-content:center; gap:10px; background:#0a7cff; color:#fff; font-size:20px; font-weight:600; border-radius:12px; }
+  .s2 .plus { width:22px; height:22px; border-radius:50%; background:#fff; position:relative; flex:none; }
+  .s2 .plus:before, .s2 .plus:after { content:''; position:absolute; left:10px; top:5px; width:2.4px; height:12px; background:#0a7cff; }
+  .s2 .plus:after { transform:rotate(90deg); }
+  .s2 .card2 { position:absolute; border-radius:20px; background:linear-gradient(160deg,#ef8a83,#df5d58); color:#fff; }
+  .s2 .acard { position:absolute; left:16px; right:16px; background:#f0f0f4; border-radius:16px; padding:12px 14px; font-size:19px; line-height:1.55; }
+  .s2 .acard .v { color:#0a7cff; }
+  .s2 .alert { position:absolute; left:52px; width:270px; background:rgba(242,242,246,.98); border-radius:14px; text-align:center; overflow:hidden; }
+  .s2 .alert .at { padding:19px 16px 16px; font-size:17px; font-weight:600; line-height:1.3; }
+  .s2 .alert .ab2 { height:44px; display:flex; align-items:center; justify-content:center; font-size:17px; color:#0a7cff; border-top:.5px solid #c8c8cc; }
+  .s2 .wall { position:absolute; inset:0; background:linear-gradient(170deg,#d9e4f5 0%,#c7d5ee 45%,#e9d8cf 100%); }
+  .s2 .apps { position:absolute; left:27px; right:27px; top:70px; display:grid; grid-template-columns:repeat(4,60px); justify-content:space-between; row-gap:28px; }
+  .s2 .ap { display:flex; flex-direction:column; align-items:center; gap:6px; font-size:12px; color:#1d1d1f; }
+  .s2 .ap .ii { width:60px; height:60px; border-radius:14px; }
+  .s2 .bub2 { width:30px; height:23px; border-radius:9px; background:#fff; position:relative; }
+  .s2 .bub2:after { content:''; position:absolute; left:5px; bottom:-6px; border:6px solid transparent; border-top-color:#fff; border-left-color:#fff; }
+  .s2 .navh { position:absolute; left:0; right:0; top:50px; height:50px; display:flex; align-items:center; justify-content:space-between; padding:0 16px; font-size:17px; }
+  .s2 .navh b { font-weight:600; position:absolute; left:0; right:0; text-align:center; pointer-events:none; }
+  .s2 .grid3 { position:absolute; left:0; right:0; display:grid; grid-template-columns:repeat(3,1fr); gap:2px; }
+  .s2 .tb { aspect-ratio:1; position:relative; }
+  .s2 .tb .du { position:absolute; right:5px; bottom:4px; font-size:12px; font-weight:600; color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.4); }
+  .s2 .tb .ck { position:absolute; right:6px; bottom:22px; width:24px; height:24px; border-radius:50%; background:#0a7cff; border:2px solid #fff; display:none; }
+  .s2 .tb .ck:after { content:''; position:absolute; left:6px; top:5px; width:8px; height:5px; border-left:2px solid #fff; border-bottom:2px solid #fff; transform:rotate(-45deg); }
+  .s2 .tb.sel .ck { display:block; } .s2 .tb.sel:after { content:''; position:absolute; inset:0; background:rgba(255,255,255,.18); }
+  .s2 .seg { display:flex; gap:8px; }
+  .s2 .seg .sg2 { font-size:17px; font-weight:600; padding:8px 18px; border-radius:20px; background:#ececf0; color:#555; }
+  .s2 .seg .sg2.on { background:#1d1d1f; color:#fff; }
+  .s2 .row2 { position:absolute; left:16px; right:16px; height:64px; border-radius:14px; background:#f0f0f4; display:flex; align-items:center; gap:14px; padding:0 16px; font-size:18px; font-weight:600; }
+  .s2 .row2 .pc { width:30px; height:21px; border:2.5px solid #2f5d9a; border-radius:3px; flex:none; }
+  .s2 .row2 .live { width:11px; height:11px; border-radius:50%; background:#2fa84f; margin-left:auto; }
+  .s2 .msg2 { position:absolute; max-width:250px; font-size:18px; line-height:1.35; padding:10px 14px; border-radius:18px; }
+  .s2 .msg2.me { right:16px; background:var(--acc); color:var(--on-acc); }
+  .s2 .msg2.it { left:16px; background:#f0f0f4; }
+  .s2 .inp2 { position:absolute; left:12px; right:12px; top:${PH - 100}px; height:52px; border-radius:26px; background:#f0f0f4; display:flex; align-items:center; padding:0 6px 0 18px; font-size:18px; }
+  .s2 .inp2 .tx { flex:1; } .s2 .inp2 .go { width:40px; height:40px; border-radius:50%; background:var(--acc); position:relative; flex:none; }
+  .s2 .inp2 .go:after { content:''; position:absolute; left:13px; top:11px; border-bottom:14px solid #fff; border-left:7px solid transparent; border-right:7px solid transparent; }
+  .s2 .mark { position:absolute; border:4px solid var(--acc); border-radius:14px; box-shadow:0 0 0 5px var(--acc-soft); z-index:40; }
+  .s2 .fdot { position:absolute; width:40px; height:40px; margin:-20px 0 0 -20px; border-radius:50%; border:4px solid var(--acc); box-shadow:0 0 0 2px #fff; opacity:0; z-index:41; }
+  .s2 .son { position:absolute; border:4px solid var(--acc); border-radius:16px; opacity:0; z-index:39; pointer-events:none; }
+  .s2 .rip2 { position:absolute; width:46px; height:46px; margin:-23px 0 0 -23px; border-radius:50%; border:4px solid var(--acc); opacity:0; z-index:41; }
+  .t2cap { position:absolute; left:56px; right:56px; top:40px; display:flex; align-items:center; gap:.5em; background:var(--paper); border-radius:var(--r-l);
+           box-shadow:var(--sh); padding:.45em .75em; font-family:var(--f-head); font-weight:800; line-height:1.16; color:var(--ink); }
+  .t2cap .badge { font-size:1.1em; width:1.6em; height:1.6em; background:var(--acc); color:var(--on-acc); font-weight:900; flex:none; }
+  `;
+  if (!document.getElementById('tut2-css')) {
+    const s = document.createElement('style'); s.id = 'tut2-css'; s.textContent = CSS2; document.head.appendChild(s);
+  }
 
-  // SaveReel in one step: the page's Install button opens the Shortcuts import sheet, Add Shortcut, done
-  RM.def('t2_install', (api, root) => {
-    const p = api.p, L = p.labels;
-    const scr = `<div class="urlbar">${esc(L.pageHost)}</div><div class="scrn" style="padding-top:210px"><div class="ptitle">${esc(L.pageTitle)}</div>` +
-      `<div class="pcard"><div class="pbtn" data-k="install">${esc(L.install)}</div>${phs(1)}</div>` +
-      `<div class="pbtn ghost">${esc(L.choose)}</div>${phs(2)}</div>` +
-      `<div class="sheet" data-k="sheet" data-from="bottom"><div class="grab"></div><div style="display:flex;align-items:center;gap:26px"><div class="act" style="padding:0;border:0;background:none"><div class="ag" style="width:110px;height:110px;border-radius:26px"></div></div>` +
-      `<div class="ptitle">SaveReel</div></div><div class="ptext">${esc(L.actionsShort)}</div><div class="pbtn" data-k="add">${esc(L.addShortcut)}</div></div>` +
-      `<div class="banner" data-k="done"><div class="sq"></div>SaveReel<div class="tick round"></div></div>`;
-    root.innerHTML = frame(p, phone(scr));
-    return player(api, root, p);
-  });
+  const status = (back, dark) => `<div class="sb" style="color:${dark ? '#fff' : '#111'}"><div class="tm">9:41</div>${back ? `<div class="bk">&#9664; ${esc(back)}</div>` : ''}` +
+    `<div class="ind"><i style="height:4px"></i><i style="height:6px"></i><i style="height:8px"></i><i style="height:10px"></i><div class="bat"></div></div></div>`;
+  const browser = (L, inner) => `<div class="ab" style="left:0;right:0;top:0;height:60px;background:#1c1c1e"></div>${status('', true)}` +
+    `<div class="topb"><div class="dn">${esc(L.done)}</div><div class="host">${esc(L.pageHost)}</div><div class="ic" style="left:297px"></div><div class="ic r" style="left:338px"></div></div>` +
+    `<div class="ab" style="left:0;top:${VIEW[0]}px;width:${PW}px;height:${VIEW[1]}px;background:#f6f4ef;overflow:hidden">${inner}</div>` +
+    `<div class="tool"><div class="chev" style="left:24px"></div><div class="chev f" style="left:126px"></div><div class="shr" data-k="share" style="left:226px"><div class="bx"></div><div class="st"></div><div class="hd"></div></div>` +
+    `<div class="cmp" style="left:330px"></div></div><div class="homei"></div>`;
+  const shotImg = p => `<img class="shot" style="top:0" src="${p.src}">`;
+  const thumbsGrid = (n, top) => `<div class="grid3" style="top:${top}px">` + Array.from({ length: n }, (_, i) =>
+    `<div class="tb" data-k="th${i}" style="background:linear-gradient(${150 + i * 23}deg, hsl(${[205, 18, 160, 32, 225, 350, 190, 40, 260][i % 9]} 45% ${62 + (i % 3) * 6}%), hsl(${[220, 8, 140, 20, 240, 330, 200, 25, 280][i % 9]} 40% ${40 + (i % 2) * 8}%))">` +
+    `<div class="ck"></div><div class="du">0:${String(12 + i * 7).slice(-2)}</div></div>`).join('') + `</div>`;
 
-  RM.def('t2_home', (api, root) => {
-    const p = api.p, L = p.labels;
-    const page = `<div class="urlbar">${esc(L.pageHost)}</div><div class="scrn" style="padding-top:210px"><div class="ptitle">${esc(L.pageTitle)}</div>` +
-      `<div class="pbtn">${esc(L.choose)}</div><div class="pcard"><b>${esc(L.finished)}</b><div class="ptext">${phs(1)}</div></div></div>` +
-      `<div class="safbar"><div class="sg"></div><div class="sg"></div><div class="share" data-k="share"><div class="bx"></div><div class="st"></div><div class="hd"></div></div><div class="sg"></div><div class="sg"></div></div>` +
-      `<div class="sheet" data-k="sheet" data-from="bottom"><div class="grab"></div><div class="ptext" style="text-align:center">${esc(L.share)}</div>` +
-      `<div class="lrow"><div class="gl"></div>${phs(1)}</div><div class="lrow" data-k="a2hs"><div class="gl"></div>${esc(L.addHome)}</div><div class="lrow"><div class="gl"></div>${phs(1)}</div></div>` +
-      `<div class="sheet" data-k="confirm" data-from="bottom" style="top:110px;border-radius:44px"><div style="display:flex;justify-content:flex-end"><div class="pbtn ghost" data-k="addbtn" style="padding:14px 34px;font-size:36px">${esc(L.add)}</div></div>` +
-      `<div style="display:flex;align-items:center;gap:26px"><div class="ai me" style="width:120px;height:120px;border-radius:28px;background:var(--c1);display:flex;align-items:center;justify-content:center"><div class="reelic"></div></div>` +
-      `<div class="field" style="flex:1">Reel Studio</div></div></div>` +
-      `<div data-k="homegrid" style="position:absolute;inset:0;background:var(--c1x);z-index:20"><div class="grid">` +
-      Array.from({ length: 11 }, () => `<div class="app"><div class="ai"></div>${phs(1)}</div>`).join('') +
-      `<div class="app" data-k="icon"><div class="ai me"><div class="reelic"></div></div>Reel Studio</div></div></div>`;
-    root.innerHTML = frame(p, phone(page));
-    return player(api, root, p);
-  });
+  // every screen the tutorial shows; data-k marks what can be tapped
+  const SCREENS = {
+    page: (p, L) => browser(L, shotImg(p)),
+    file: (p, L) => browser(L, `<div class="ab" style="inset:0;background:#fff"></div>` +
+      `<div class="ab" style="left:141px;top:110px;width:94px;height:122px;background:#fff;border:1.5px solid #c9c9ce;border-radius:4px 22px 4px 4px;box-shadow:0 2px 6px rgba(0,0,0,.08)">` +
+      `<div class="ab" style="left:20px;top:34px;width:52px;height:52px;border-radius:12px;background:linear-gradient(135deg,#7aa7ff,#e98bb8 55%,#ffb86b)"></div></div>` +
+      `<div class="ab" style="left:0;right:0;top:325px;text-align:center;font-size:22px">${esc(L.fileName)}</div>` +
+      `<div class="ab" style="left:0;right:0;top:358px;text-align:center;font-size:17px;color:#8a8a8e">${esc(L.fileMeta)}</div>` +
+      `<div class="ab blue" data-k="open" style="left:84px;width:207px;top:443px;height:32px;line-height:32px;text-align:center;font-size:20px;white-space:nowrap">${esc(L.openIn)}</div>` +
+      `<div class="ab blue" style="left:0;right:0;top:482px;text-align:center;font-size:20px">${esc(L.more)}</div>`),
+    import: (p, L) => `<div class="ab" style="inset:0;background:#1c1c1e"></div>${status(L.backApp, true)}` +
+      `<div class="ab" style="left:0;right:0;top:54px;bottom:0;background:#fff;border-radius:12px 12px 0 0"></div>` +
+      `<div class="ab blue" style="left:16px;top:70px;font-size:20px">${esc(L.cancel)}</div><div class="ab blue" style="right:16px;top:70px;font-size:20px">${esc(L.report)}</div>` +
+      `<div class="ab" style="left:0;right:0;top:111px;text-align:center;font-size:31px;font-weight:700">SaveReel</div>` +
+      `<div class="ab" style="left:0;right:0;top:161px;text-align:center;font-size:19px;color:#8a8a8e">${esc(L.shared)}</div>` +
+      `<div class="card2" style="left:103px;top:376px;width:169px;height:120px"><div class="ab" style="left:13px;top:12px;width:20px;height:20px;border:2.5px solid #fff;border-radius:6px"></div>` +
+      `<div class="ab" style="right:12px;top:12px;width:20px;height:20px;border-radius:50%;background:rgba(255,255,255,.35)"></div>` +
+      `<div class="ab" style="left:12px;bottom:12px;font-size:19px;font-weight:700">SaveReel</div></div>` +
+      `<div class="btn2" data-k="add" style="left:24px;top:691px;width:327px;height:55px"><div class="plus"></div>${esc(L.addShortcut)}</div><div class="homei"></div>`,
+    editor: (p, L) => `<div class="ab" style="inset:0;background:#fff"></div>${status(L.backApp)}` +
+      `<div class="ab" style="left:0;right:0;top:50px;height:40px;display:flex;align-items:center;justify-content:center;gap:9px;font-size:20px;font-weight:700">` +
+      `<div style="width:24px;height:24px;border-radius:6px;background:linear-gradient(135deg,#ffd36b,#ff8f8f 50%,#8fb4ff)"></div>SaveReel<div style="width:20px;height:20px;border-radius:50%;background:#e5e5ea"></div></div>` +
+      `<div class="ab blue" data-k="done" style="left:306px;top:47px;width:56px;height:36px;line-height:36px;text-align:center;font-size:20px;font-weight:700">${esc(L.done)}</div>` +
+      L.editor.map((c, i) => `<div class="acard" style="top:${[100, 276, 390, 494][i]}px;${i > 1 ? 'left:32px;' : ''}">${c}</div>`).join('') +
+      `<div class="ab" style="left:20px;right:20px;top:667px;height:48px;border-radius:12px;background:#ececf0;color:#8a8a8e;font-size:19px;display:flex;align-items:center;justify-content:center">${esc(L.searchActions)}</div>` +
+      `<div class="homei"></div>`,
+    share: (p, L) => browser(L, shotImg(p)) + `<div class="dim"></div><div class="sheet2" style="top:430px">` +
+      `<div style="display:flex;align-items:center;gap:12px;padding:18px 16px 14px"><img src="${p.icon}" style="width:46px;height:46px;border-radius:11px">` +
+      `<div><div style="font-size:16px;font-weight:600">Reel Studio</div><div style="font-size:14px;color:#8a8a8e">${esc(L.pageHost)}</div></div></div>` +
+      `<div class="grp"><div class="li">${esc(L.copy)}<div class="g"></div></div><div class="li">${esc(L.favorites)}<div class="g"></div></div>` +
+      `<div class="li" data-k="a2hs">${esc(L.addHome)}<div class="g"></div></div></div></div>`,
+    a2hs: (p, L) => `<div class="ab" style="inset:0;background:#1c1c1e"></div>${status('', true)}<div class="ab" style="left:0;right:0;top:54px;bottom:0;background:#f2f2f7;border-radius:12px 12px 0 0"></div>` +
+      `<div class="navh" style="top:56px"><span class="blue">${esc(L.cancel)}</span><b>${esc(L.addHome)}</b><span class="blue" data-k="add" style="font-weight:600;padding:6px 4px">${esc(L.add)}</span></div>` +
+      `<div class="grp" style="position:absolute;left:0;right:0;top:130px;padding:14px;display:flex;gap:14px;align-items:center"><img src="${p.icon}" style="width:62px;height:62px;border-radius:14px">` +
+      `<div style="flex:1;font-size:17px"><div style="border-bottom:.5px solid #d4d4d8;padding:6px 0 10px">Reel Studio</div><div style="color:#8a8a8e;font-size:15px;padding-top:8px">${esc(L.pageHost)}</div></div></div><div class="homei"></div>`,
+    home: (p, L) => `<div class="wall"></div>${status()}<div class="apps">` +
+      ['#f2b880', '#9cc8a8', '#8fb0e8', '#e89aa5', '#b7a3e6', '#f0d27a', '#86c9d6', '#c7c7cc'].map((c, i) =>
+        `<div class="ap"><div class="ii" style="background:linear-gradient(160deg,${c},${c}cc)"></div>${esc(L.apps[i])}</div>`).join('') +
+      `<div class="ap" data-k="claude"><div class="ii" style="background:var(--acc);display:flex;align-items:center;justify-content:center"><div class="bub2"></div></div>Claude</div>` +
+      `<div class="ap" data-k="reel"><img class="ii" src="${p.icon}">Reel Studio</div></div><div class="homei"></div>`,
+    picker: (p, L) => `<div class="ab" style="inset:0;background:#1c1c1e"></div>${status('', true)}<div class="ab" style="left:0;right:0;top:54px;bottom:0;background:#fff;border-radius:12px 12px 0 0"></div>` +
+      `<div class="navh" style="top:58px"><span class="blue">${esc(L.cancel)}</span><b>${esc(L.photos)}</b><span class="blue" data-k="add" style="font-weight:600;padding:6px 4px;opacity:${p.picked ? 1 : .35}">${esc(L.add)}</span></div>` +
+      `<div class="ab" data-k="recent" style="left:16px;top:116px;font-size:20px;font-weight:700">${esc(L.recent)}</div>` +
+      thumbsGrid(12, 156) + `<div class="homei"></div>`,
+    tabs: (p, L) => `<div class="ab" style="inset:0;background:#fff"></div>${status()}` +
+      `<div class="ab" style="left:20px;top:62px;font-size:30px;font-weight:700">Claude</div>` +
+      `<div class="ab seg" style="left:20px;top:116px"><div class="sg2 ${p.code ? '' : 'on'}">${esc(L.chat)}</div><div class="sg2 ${p.code ? 'on' : ''}" data-k="code">${esc(L.code)}</div></div>` +
+      (p.code ? `<div class="row2" data-k="sess" style="top:176px"><div class="pc"></div>${esc(L.sessName)}<div class="live"></div></div>` +
+                `<div class="ab" style="left:20px;top:256px;font-size:15px;color:#8a8a8e">${esc(L.sessNote)}</div>`
+              : `<div class="ab" style="left:20px;right:20px;top:190px;font-size:18px;color:#8a8a8e;line-height:1.5">${esc(L.chatEmpty)}</div>`) + `<div class="homei"></div>`,
+    chat: (p, L) => `<div class="ab" style="inset:0;background:#fff"></div>${status()}` +
+      `<div class="navh"><span class="blue" style="font-size:22px">&#8249;</span><b>${esc(L.sessName)}</b><span></span></div>` +
+      `<div class="msg2 me" data-k="mine" style="top:560px">${esc(L.command)}</div><div class="msg2 it" data-k="reply" style="top:625px">${esc(L.reply)}</div>` +
+      `<div class="inp2"><div class="tx" data-k="typed"></div><div class="go" data-k="go"></div></div><div class="homei"></div>`,
+    allow: (p, L) => `<div class="ab" style="inset:0;background:#f2f2f7"></div>${status()}` +
+      `<div class="ab" style="left:20px;top:62px;font-size:30px;font-weight:700">SaveReel</div><div class="dim"></div>` +
+      `<div class="alert" style="top:270px"><div class="at">${esc(L.allowTitle)}</div><div class="ab2">${esc(L.allowOnce)}</div>` +
+      `<div class="ab2" data-k="always" style="font-weight:600">${esc(L.allowAlways)}</div><div class="ab2">${esc(L.dontAllow)}</div></div>`,
+    photos: (p, L) => `<div class="ab" style="inset:0;background:#fff"></div>${status()}` +
+      `<div class="ab" style="left:16px;top:58px;font-size:30px;font-weight:700">${esc(L.photos)}</div>` +
+      thumbsGrid(15, 110).replace('data-k="th14"', 'data-k="newv"') + `<div class="homei"></div>`,
+  };
 
-  RM.def('t2_upload', (api, root) => {
-    const p = api.p, L = p.labels;
-    const page = `<div class="scrn" style="padding-top:150px"><div class="ptitle">${esc(L.pageTitle)}</div>` +
-      `<div class="pbtn" data-k="choose">${esc(L.choose)}</div>` +
-      `<div data-k="files" style="display:flex;flex-direction:column;gap:16px">` +
-      [0, 1].map(i => `<div class="pcard" style="padding:18px 24px"><b>IMG_${4021 + i}.MOV</b><div class="bar2" style="margin-top:12px"><div data-k="bar${i}"></div></div></div>`).join('') +
-      `<div class="pbtn" data-k="send">${esc(L.send)}</div></div>` +
-      `<div class="pcard" data-k="done" style="background:var(--good);color:var(--paper);text-align:center;font-weight:800;font-size:44px">${esc(L.done)}</div></div>` +
-      `<div class="sheet" data-k="picker" data-from="bottom" style="top:150px;padding:30px 24px"><div class="grab"></div>` +
-      `<div class="ptitle" style="font-size:44px" data-k="recent">${esc(L.recent)}</div><div class="ptext" style="font-size:30px">${esc(L.recentNote)}</div>` +
-      `<div class="thumbs">${thumbs(6, [1, 3])}</div><div class="pbtn" data-k="pickdone" style="padding:22px">${esc(L.pickDone)}</div></div>`;
-    root.innerHTML = frame(p, phone(page));
-    const upd = player(api, root, p);
-    const bars = [0, 1].map(i => root.querySelector(`[data-k="bar${i}"]`));
+  // a target box in screen units: a real button (from the page render's measured boxes) or a drawn element
+  function target(root, scr, p, k) {
+    if (p.rects && p.rects[k]) { const [x, y, w, h] = p.rects[k]; return [x, y + VIEW[0], w, h]; }
+    const el = scr.querySelector(`[data-k="${k}"]`); if (!el) return null;
+    const a = scr.getBoundingClientRect(), b = el.getBoundingClientRect(), k2 = a.width / PW;
+    return [(b.left - a.left) / k2, (b.top - a.top) / k2, b.width / k2, b.height / k2];
+  }
+
+  RM.def('t2s', (api, root) => {
+    const p = api.p, L = p.labels, dur = api.end - api.start;
+    const ow = PW * S2 + 2 * BZ, oh = PH * S2 + 2 * BZ, left = (W() - ow) / 2, top = H() - 40 - oh;
+    root.innerHTML = `<div class="tut"><div class="t2cap a" style="font-size:58px">${p.part ? `<div class="badge round">${esc(p.part)}</div>` : ''}<div class="ct">${esc(p.cap)}</div></div>` +
+      `<div class="p2 a" style="left:${left}px;top:${top}px;width:${ow}px;height:${oh}px"><div class="s2">${SCREENS[p.screen](p, L)}` +
+      `<div class="son"></div><div class="son"></div><div class="son"></div><div class="mark"></div><div class="rip2 round"></div><div class="fdot round"></div></div></div></div>`;
+    const cap = root.querySelector('.t2cap'), ct = cap.querySelector('.ct');
+    let fs = 58; while (ct.offsetHeight > 3 * 1.16 * fs + 2 && fs > 54) cap.style.fontSize = (fs -= 1) + 'px';
+    const scr = root.querySelector('.s2'), sons = [...scr.querySelectorAll('.son')], mark = scr.querySelector('.mark'), dot = scr.querySelector('.fdot'), rip = scr.querySelector('.rip2');
+    const taps = (p.taps || []).map(k => ({ k, box: target(root, scr, p, k) })).filter(x => x.box);
+    const ring = p.ring ? target(root, scr, p, p.ring) : null;
+    const tapT = p.tapAt != null ? [p.tapAt] : taps.map((_, i) => dur - 0.75 - (taps.length - 1 - i) * 0.7);   // the last tap 0.75 s before the next screen
+    const typed = scr.querySelector('[data-k="typed"]'), mine = scr.querySelector('[data-k="mine"]'), reply = scr.querySelector('[data-k="reply"]');
+    const sel = p.sel || [];
+    (p.selected || []).forEach(x => { const el = scr.querySelector(`[data-k="${x}"]`); if (el) el.classList.add('sel'); });
     return tg => {
-      upd(tg);
       const t = tg - api.start;
-      bars.forEach((b, i) => { b.style.width = (100 * P(t, (p.barAt || 4.3) + i * 0.9, 1.1, 'io')).toFixed(1) + '%'; });
+      // which tap is current: the marker sits on it from the start, the finger comes in and presses at its time
+      let i = tapT.findIndex(x => t < x + 0.35); if (i < 0) i = taps.length - 1;
+      const cur = taps[i] ? taps[i].box : ring;
+      if (cur) {
+        const pad = 6, br = 1 + 0.035 * Math.sin(t * 5.2);
+        const v = P(t, 0.1, 0.25);
+        Object.assign(mark.style, { left: (cur[0] - pad) + 'px', top: (cur[1] - pad) + 'px', width: (cur[2] + 2 * pad) + 'px', height: (cur[3] + 2 * pad) + 'px',
+                                    opacity: v.toFixed(3), transform: `scale(${br.toFixed(4)})`, borderRadius: Math.min(16, cur[3] / 2 + pad) + 'px' });
+      } else mark.style.opacity = 0;
+      // sonar rings: keep growing out of the target, so the eye finds it and the frame is never frozen (the screen itself stays still)
+      sons.forEach((el, j) => {
+        if (!cur) { el.style.opacity = 0; return; }
+        const ph = ((t + j / 3) % 1.0) / 1.0, g = 6 + 38 * E.out(ph);
+        Object.assign(el.style, { left: (cur[0] - g) + 'px', top: (cur[1] - g) + 'px', width: (cur[2] + 2 * g) + 'px', height: (cur[3] + 2 * g) + 'px',
+                                  opacity: (0.85 * (1 - ph) * P(t, 0.2, 0.3)).toFixed(3), borderRadius: Math.min(16, cur[3] / 2) + g + 'px' });
+      });
+      if (taps[i]) {
+        const b = taps[i].box, cx = b[0] + b[2] / 2, cy = b[1] + b[3] / 2, tt = tapT[i];
+        const inn = P(t, tt - 0.55, 0.25) * (1 - P(t, tt + 0.45, 0.25)), u = t - tt;   // a hollow ring just around the tap: the label stays readable
+        const press = u >= 0 && u < 0.3 ? 1 - 0.18 * Math.sin(u / 0.3 * Math.PI) : 1;
+        Object.assign(dot.style, { left: cx + 'px', top: cy + 'px', opacity: inn.toFixed(3), transform: `scale(${(press * (1.25 - 0.25 * inn)).toFixed(3)})` });
+        if (u >= 0 && u < 0.6) { rip.style.left = cx + 'px'; rip.style.top = cy + 'px'; rip.style.opacity = (0.9 * (1 - u / 0.6)).toFixed(3); rip.style.transform = `scale(${(1 + 1.6 * E.out(u / 0.6)).toFixed(3)})`; }
+        else rip.style.opacity = 0;
+      } else { dot.style.opacity = 0; rip.style.opacity = 0; }
+      // selections that follow taps (picker thumbnails)
+      taps.forEach((x, j) => { if (sel.includes(x.k)) { const el = scr.querySelector(`[data-k="${x.k}"]`); if (el) el.classList.toggle('sel', t >= tapT[j]); } });
+      if (typed) {                                                // the command is typed, sent, then answered
+        const n = Math.round(L.command.length * clamp((t - 0.25) / 0.7)), sent = t >= tapT[0];
+        typed.textContent = sent ? '' : L.command.slice(0, n);
+        mine.style.opacity = P(t, tapT[0] + 0.05, 0.2).toFixed(3); reply.style.opacity = P(t, tapT[0] + 0.7, 0.3).toFixed(3);
+      }
     };
   });
 
-  RM.def('t2_claude', (api, root) => {
-    const p = api.p, L = p.labels;
-    const scr = `<div data-k="homegrid" style="position:absolute;inset:0;background:var(--c1x);z-index:20"><div class="grid">` +
-      Array.from({ length: 6 }, () => `<div class="app"><div class="ai"></div>${phs(1)}</div>`).join('') +
-      `<div class="app" data-k="appicon"><div class="ai cl"><div class="bub"></div></div>Claude</div>` +
-      Array.from({ length: 5 }, () => `<div class="app"><div class="ai"></div>${phs(1)}</div>`).join('') + `</div></div>` +
-      `<div class="scrn" style="padding-top:130px"><div class="tabs"><div class="tab">${esc(L.chat)}</div><div class="tab" data-k="code">Code</div></div>` +
-      `<div class="sess" data-k="sess"><div class="pc"></div>Reels<div class="live round"></div></div><div class="sess" style="opacity:.5"><div class="pc"></div>${phs(1)}</div></div>` +
-      `<div data-k="chat" style="position:absolute;inset:0;background:var(--paper);z-index:15"><div class="scrn" style="padding-top:130px">` +
-      `<div class="ptitle" style="font-size:42px">Reels</div><div style="flex:1"></div>` +
-      `<div class="tmsg me" data-k="mine"><span>${esc(L.command)}</span></div><div class="tmsg it" data-k="reply">${esc(L.reply)}</div><div style="height:150px"></div></div>` +
-      `<div class="inp"><div class="tx" data-k="typed"></div><div class="go round" data-k="go"></div></div></div>`;
-    root.innerHTML = frame(p, phone(scr));
-    return player(api, root, p);
-  });
-
-  RM.def('t2_gallery', (api, root) => {
-    const p = api.p, L = p.labels;
-    const scr = `<div class="scrn" style="padding-top:150px"><div class="ptitle">${esc(L.finished)}</div>` +
-      `<div class="pcard" style="display:flex;align-items:center;gap:20px"><div style="flex:1"><b>${esc(L.reelName)}</b><div class="ptext">${phs(1)}</div></div>` +
-      `<div class="pbtn" data-k="gallery" style="padding:20px 26px;font-size:34px">${esc(L.gallery)}</div></div>${phs(3)}</div>` +
-      `<div class="banner" data-k="run"><div class="sq"></div>SaveReel<div class="tick round"></div></div>` +
-      `<div data-k="photos" style="position:absolute;inset:0;background:var(--paper);z-index:20"><div class="scrn" style="padding-top:130px;gap:16px">` +
-      `<div class="ptitle">${esc(L.photos)}</div><div class="thumbs"><div class="th newv" data-k="newv"><div class="du">0:41</div></div>${thumbs(11)}</div></div></div>`;
-    root.innerHTML = frame(p, phone(scr));
-    return player(api, root, p);
-  });
 })();

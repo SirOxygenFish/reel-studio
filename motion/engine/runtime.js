@@ -356,6 +356,7 @@
     const s = SC.find(x => t >= x.start && t < x.end) || SC[SC.length - 1];
     const i = SC.indexOf(s), u = clamp((t - s.start) / Math.max(0.5, s.end - s.start));
     const dir = i % 2 ? 1 : -1, cm = s.spec.camera || {};
+    if (cm.still) return { z: 1, x: 0, y: 0, r: 0 };                    // screens with text to read: no drift, no zoom, no tilt
     let z = lerp(cm.z0 ?? 1.0, cm.z1 ?? (MO.camZ || 1.055), E.io(u));   // slow push-in per scene (theme motion.camZ)
     let x = dir * 16 * Math.sin(u * Math.PI * 0.8) + 7 * Math.sin(t * 0.37), y = -10 * u + 6 * Math.cos(t * 0.29);
     let r = (cm.r ?? 0.5) * dir * (u - 0.5) * 2;
@@ -425,6 +426,8 @@
           mm.el.style.transform = `translate(${mm.dx * (1 - k)}px,${mm.dy * (1 - k)}px) scale(${lerp(mm.s, 1, k)})`;
           if (mm.src) mm.src.style.opacity = 0;
         }
+      } else if (tr.type === 'fade') {                                    // plain cross-fade: text stays sharp
+        A.el.style.opacity = 1 - e; B.el.style.opacity = e;
       } else if (tr.type === 'blur') {
         A.el.style.opacity = 1 - e; A.el.style.filter = `blur(${(20 * e).toFixed(1)}px)`;
         B.el.style.opacity = e; B.el.style.filter = `blur(${(20 * (1 - e)).toFixed(1)}px)`;
@@ -561,7 +564,7 @@
   // sound-effect cues (tools/sfx.py): a whoosh on every transition, pop/tick on emphasis punches; times relative to t0
   function events() {
     const ev = [];
-    SC.forEach((s, i) => { if (!i) return; const tr = s.tin; if (tr.type === 'cut') ev.push([s.start, 'pop']); else if (tr.type !== 'blur') ev.push([s.start - tr.d / 2, 'whoosh']); });
+    SC.forEach((s, i) => { if (!i) return; const tr = s.tin; if (tr.type === 'cut') ev.push([s.start, 'pop']); else if (tr.type !== 'blur' && tr.type !== 'fade') ev.push([s.start - tr.d / 2, 'whoosh']); });
     PUNCH.forEach((p, i) => ev.push([p, i % 2 ? 'tick' : 'pop']));          // alternate kinds; sfx.py also varies the recipe + thins
     (CFG.board.cues || []).forEach(c => ev.push([c[0], c[1]]));             // explicit cues (tutorials: clicks), no camera punch
     return ev.filter(e => e[0] >= CFG.t0 && e[0] < CFG.t1).map(e => [+(e[0] - CFG.t0).toFixed(3), e[1]]).sort((x, y) => x[0] - y[0]);

@@ -61,7 +61,6 @@
   .ready .acts { flex: none; display: flex; flex-direction: column; gap: 8px; align-items: stretch; }
   .dl.second { background: transparent; color: var(--accent); border: 2px solid var(--accent); padding: 8px 12px; font-size: 15px;
                font-family: inherit; cursor: pointer; text-align: center; }
-  .link { display: block; color: var(--accent); padding-top: 12px; font-size: 16px; font-weight: 600; }
   #install .hint { color: var(--muted); font-size: 16px; margin: 10px 0 0; }
   .manual summary { cursor: pointer; color: var(--muted); font-size: 16px; padding-top: 14px; }
   .manual ol { margin: 8px 0 0; padding-left: 22px; font-size: 16px; }
@@ -87,8 +86,7 @@
     <h2 data-t="installTitle">Once: add SaveReel</h2>
     <p class="hint" data-t="installText" style="margin:0 0 14px">It saves finished videos into Photos.</p>
     <a class="big" id="installBtn" data-t="install" style="text-decoration:none">Install SaveReel</a>
-    <p class="hint" data-t="installHint">In Shortcuts tap Add Shortcut at the bottom, then come back here.</p>
-    <a class="link" id="installFile" data-t="installAlt">Does not open? Download the file</a>
+    <p class="hint" data-t="installHint">Safari asks to open it in Shortcuts: tap Open, then Add Shortcut.</p>
     <button class="big second" id="installDone" data-t="installDone" style="margin-top:14px">I added it</button>
   </section>
 
@@ -139,7 +137,7 @@ let picked = [], batch = null, busy = false;
 
 const T = {
   en: { installTitle: 'Once: add SaveReel', installText: 'It saves finished videos into Photos.', install: 'Install SaveReel',
-        installHint: 'In Shortcuts tap Add Shortcut at the bottom, then come back here.', installAlt: 'Does not open? Download the file',
+        installHint: 'Safari asks to open it in Shortcuts: tap Open, then Add Shortcut.',
         installDone: 'I added it', savePhotos: 'Save to Photos', preparing: 'Preparing…', tapAgain: 'Ready, tap again',
         manualTitle: 'No SaveReel? Save by hand',
         manual: ['Tap Download next to the video.', 'Tap the download arrow in the Safari address bar, then the video.', 'Tap Share.', 'Tap Save Video.'],
@@ -150,7 +148,7 @@ const T = {
         waiting: 'Waiting', sending: 'Uploading', uploaded: 'Uploaded', failed: 'Failed', lost: 'connection lost', of: 'of',
         noAnswer: 'The computer is not answering', close: 'Close', space: 'not enough space on the computer', types: 'only video and photos' },
   ru: { installTitle: 'Один раз: добавьте SaveReel', installText: 'Она сохраняет готовые видео в «Фото».', install: 'Установить SaveReel',
-        installHint: 'В «Быстрых командах» нажмите кнопку добавления внизу и вернитесь сюда.', installAlt: 'Не открывается? Скачать файл',
+        installHint: 'Safari предложит открыть файл в «Быстрых командах»: нажмите «Открыть», затем кнопку добавления.',
         installDone: 'Готово, добавлено', savePhotos: 'Сохранить в «Фото»', preparing: 'Готовлю…', tapAgain: 'Готово, нажмите ещё раз',
         manualTitle: 'Без SaveReel: сохранить вручную',
         manual: ['Нажмите «Скачать» у видео.', 'Нажмите стрелку загрузок в адресной строке Safari, затем видео.', 'Нажмите «Поделиться».', 'Нажмите «Сохранить видео».'],
@@ -161,7 +159,7 @@ const T = {
         waiting: 'Ждёт', sending: 'Загружается', uploaded: 'Загружено', failed: 'Ошибка', lost: 'связь прервалась', of: 'из',
         noAnswer: 'Компьютер не отвечает', close: 'Закрыть', space: 'на компьютере не хватает места', types: 'только видео и фото' },
   pl: { installTitle: 'Jednorazowo: dodaj SaveReel', installText: 'Zapisuje gotowe filmy w Zdjęciach.', install: 'Zainstaluj SaveReel',
-        installHint: 'W Skrótach stuknij przycisk dodawania na dole i wróć tutaj.', installAlt: 'Nie otwiera się? Pobierz plik',
+        installHint: 'Safari zapyta, czy otworzyć plik w Skrótach: stuknij Otwórz, potem przycisk dodawania.',
         installDone: 'Gotowe, dodane', savePhotos: 'Zapisz w Zdjęciach', preparing: 'Przygotowuję…', tapAgain: 'Gotowe, stuknij jeszcze raz',
         manualTitle: 'Bez SaveReel: zapisz ręcznie',
         manual: ['Stuknij „Pobierz” przy filmie.', 'Stuknij strzałkę pobierania w pasku adresu Safari, potem film.', 'Stuknij Udostępnij.', 'Wybierz zapisanie wideo w Zdjęciach.'],
@@ -185,7 +183,7 @@ function applyLang(l) {
   document.querySelectorAll('[data-t]').forEach(el => el.textContent = t[el.dataset.t]);
   document.querySelectorAll('[data-tp]').forEach(el => el.placeholder = t[el.dataset.tp]);
   document.querySelectorAll('#langs button').forEach(b => b.classList.toggle('on', b.dataset.l === l));
-  $('installBtn').href = installLink(); $('installFile').href = shortcutFile();
+  $('installBtn').href = shortcutFile();
   $('manualSteps').innerHTML = t.manual.map(x => `<li>${esc(x)}</li>`).join('');
   loadReady();
 }
@@ -306,9 +304,9 @@ const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) ||
 const galleryLink = f => 'shortcuts://run-shortcut?name=SaveReel&input=text&text=' +
   encodeURIComponent(location.origin + '/v/' + f.id + f.ext + '?k=' + KEY);
 
-// The signed SaveReel file in the page's language (its alert speaks it). Two ways in: the Shortcuts import link, or the file itself.
+// The signed SaveReel file in the page's language (its alert speaks it). A plain link: Safari offers "Open in Shortcuts".
+// (shortcuts://import-shortcut was tried on iOS 18: "The shortcut URL was invalid".)
 const shortcutFile = () => `${location.origin}/shortcut/${LANG}/SaveReel.shortcut?k=${encodeURIComponent(KEY)}`;
-const installLink = () => 'shortcuts://import-shortcut?name=SaveReel&url=' + encodeURIComponent(shortcutFile());
 function showInstall(on) {
   $('install').hidden = !on; $('reinstall').hidden = on;
   try { localStorage.setItem('savereel', on ? '' : 'added'); } catch {}

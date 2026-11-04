@@ -30,7 +30,7 @@ The computer does the work, so it has to be switched on with the Claude app open
 ## 3. On the iPhone, once
 
 1. **Open the upload page.** At the end of the install, the computer showed a QR code (the desktop icon **Reel Studio phone link** shows it again). Scan it with the iPhone camera and open the page in Safari. The phone must be on the same Wi-Fi as the computer.
-2. **Add SaveReel.** It saves a finished Reel into Photos. On the page, tap **Install SaveReel**, then **Add Shortcut** at the bottom. The first time it runs, tap **Allow**. If nothing opens, tap **Does not open? Download the file** under the button, then open the downloaded file. If even that fails, see the last section of this page.
+2. **Add SaveReel.** It saves a finished Reel into Photos. On the page, tap **Install SaveReel**. Safari asks to open it in Shortcuts: tap **Open**, then **Add Shortcut**, then **Done**. The first time you tap **To gallery**, iPhone asks for access: tap **Always Allow**. If it does not work, see the last section of this page.
 3. **Put the page on the Home Screen.** Still in Safari, tap **Share**, then **Add to Home Screen**, then **Add**.
 4. **Watch Tutorial 2**: on the upload page, tap **How to**. It plays from your computer, in the page's language.
 

@@ -6,10 +6,12 @@
 
 Sources: motion/tutorials/kit.js (drawings + action player), t1.json / t2.json (timelines), strings.json (all texts).
 Tutorial 1 (PC, 16:9) goes to docs/tutorials/, Tutorial 2 (iPhone, 9:16) to upload-page/tutorials/ (played offline by the page).
+Tutorial 2 is a list of steps (one screen, one tap); its page screens are real renders of upload-page/index.html taken by
+motion/tutorials/shots.mjs against a scratch copy of the page on a free local port, so every button sits where it really is.
 The tutorial gate keeps the Reel gate's rules where they apply (format, motion never dead for > 1 s, nothing outside the frame,
 round things round, no long dashes, sound peaks, a visual review) and drops the Instagram ones (subtitle band, caption strip).
 """
-import json, os, re, shutil, subprocess, sys, wave
+import importlib, json, os, re, secrets, shutil, subprocess, sys, threading, wave
 from pathlib import Path
 
 import common as C
@@ -46,9 +48,70 @@ def texts(tut, lang):
     return {**S["ui"][tut], **S["en"][tut], **S[lang][tut]}
 
 
+def steps_scenes(sp, tb, shots):
+    """a "steps" timeline (Tutorial 2): one screen and one tap per scene, plain fades, a still camera"""
+    rects = json.loads((shots / "rects.json").read_text(encoding="utf-8"))["shots"] if (shots / "rects.json").exists() else {}
+    icon = (C.ROOT / ".claude-plugin" / "icon.png").as_uri()
+    shot = lambda name: (shots / f"{name}.png").as_uri()
+    still, fade = {"still": True}, sp.get("fade", 0.2)
+    ti = resolve(sp["title"], tb)
+    scenes = [{"type": "tut_title", "at": 0, "title": ti["title"], "sub": ti["sub"], "src": shot(ti["shot"]), "camera": still}]
+    at, cues = ti["d"], []
+    for st in sp["steps"]:
+        s = {**resolve(st, tb), "type": "t2s", "at": round(at, 3), "in": "fade", "inDur": fade, "labels": tb, "camera": still, "icon": icon}
+        if st.get("shot"):
+            s["src"], s["rects"] = shot(st["shot"]), rects.get(st["shot"], {})
+        n = len(st.get("taps", []))                                 # the same tap times as kit.js
+        cues += ([[round(at + st["tapAt"], 3), "tick"]] if "tapAt" in st else
+                 [[round(at + st["d"] - 0.75 - (n - 1 - i) * 0.7, 3), "tick"] for i in range(n)])
+        scenes.append(s); at += st["d"]
+    en = resolve(sp["end"], tb)
+    scenes.append({"type": "tut_end", "at": round(at, 3), "in": "fade", "inDur": 0.35, "title": en["title"], "rows": en["rows"], "camera": still})
+    cues.append([round(at - sp["steps"][-1]["d"] + 0.5, 3), "ding"])
+    return scenes, cues, round(at + en["d"], 3)
+
+
+SHOT_SERVER = {}
+
+
+def make_shots(tut, lang):
+    """real screenshots of the upload page in this language, against a scratch copy of the page on a free local port"""
+    out = BUILD / f"{tut}-{lang}" / "shots"; up, ready, clips = out / "up", out / "ready", out / "clips"
+    for d in (up, ready, clips):
+        d.mkdir(parents=True, exist_ok=True)
+    for old in up.iterdir():                                     # the batches the last run uploaded go to the Recycle Bin / Trash
+        C.trash(old)
+    if not SHOT_SERVER:
+        sys.path.insert(0, str(C.ROOT / "upload-page")); srv = importlib.import_module("server")
+        s = srv.Server(("127.0.0.1", 0), srv.Handler)
+        srv.KEY, srv.PORT = secrets.token_urlsafe(12), s.server_address[1]
+        threading.Thread(target=s.serve_forever, daemon=True).start()
+        SHOT_SERVER.update(mod=srv, port=srv.PORT, key=srv.KEY)
+    srv = SHOT_SERVER["mod"]; srv.UPLOADS, srv.READY = str(up), str(ready)
+    names = []
+    for name, size in (("IMG_4021.MOV", 31_400_000), ("IMG_4022.MOV", 24_800_000)):   # sizes the page shows; the bytes are zeros
+        f = clips / name
+        if not f.exists() or f.stat().st_size != size:
+            with open(f, "wb") as h:
+                h.truncate(size)
+        names.append(str(f))
+    sample = C.ROOT / "docs" / "tutorials" / "tutorial1-pc.en.mp4"
+    url = f"http://127.0.0.1:{SHOT_SERVER['port']}/?k={SHOT_SERVER['key']}"
+    r = subprocess.run([C.node(), str(SRC / "shots.mjs"), url, lang, str(out), str(ready), str(sample), texts(tut, lang)["reelName"], *names],
+                       env=C.run_env(), timeout=240)
+    if r.returncode:
+        C.fail(f"page screenshots failed: {tut} {lang}")
+    return out
+
+
 def storyboard(tut, lang):
     sp, tb = spec(tut), texts(tut, lang)
     W, H = sp["size"]
+    if "steps" in sp:
+        scenes, cues, t1 = steps_scenes(sp, tb, BUILD / f"{tut}-{lang}" / "shots")
+        return {"theme": "default", "size": [W, H], "fps": 30, "t0": 0, "t1": t1, "box": [40, 40, W - 40, H - 40], "noMark": True,
+                "tin": "none", "scenes": scenes, "extra_js": [str(SRC / "kit.js")], "voice": "silence.wav", "sfx": True, "sfxLevel": -8,
+                "cues": sorted(cues), "css": "#substrip{display:none}", "textSel": ".tut .ct, .tut .ttl, .tut .tsub, .tut .er"}
     scenes, cues = [], []
     for sc in sp["scenes"]:
         s = resolve({k: v for k, v in sc.items()}, tb)
@@ -86,6 +149,8 @@ def all_text(tut, lang):
 
 def build(tut, lang, preview=None):
     d = BUILD / f"{tut}-{lang}"; d.mkdir(parents=True, exist_ok=True)
+    if spec(tut).get("shots"):
+        make_shots(tut, lang)
     sb = storyboard(tut, lang)
     C.save_json(d / "storyboard.json", sb)
     silence(d / "silence.wav", sb["t1"])
@@ -124,7 +189,8 @@ def gate(tut, lang):
     add("format", v["width"] == W and v["height"] == H and abs(fps - 30) < 0.01 and v["codec_name"] == "h264" and v["pix_fmt"] == "yuv420p" and a and a[0]["codec_name"] == "aac",
         f"{v['width']}x{v['height']} {fps:.2f} fps {v['codec_name']} {v['pix_fmt']} audio {a[0]['codec_name'] if a else 'none'}")
     dur = C.duration(f)
-    add("length", WANT["len"][0] <= dur <= WANT["len"][1], f"{dur:.1f} s (30-45 s)")
+    top = sp.get("max_len", WANT["len"][1])
+    add("length", WANT["len"][0] <= dur <= top, f"{dur:.1f} s ({WANT['len'][0]:.0f}-{top:.0f} s)")
     m = qc.get("motion", {})
     add("calm but never still", m.get("median", 0) >= WANT["motion"] and not qc.get("dead_runs"),
         f"motion median {m.get('median')} (>= {WANT['motion']}), dead stretches > {WANT['dead']} s: {qc.get('dead_runs') or 'none'}")
@@ -150,7 +216,7 @@ def gate(tut, lang):
         out = C.ROOT / sp["out"].replace("{lang}", lang); out.parent.mkdir(parents=True, exist_ok=True)
         ship = d / "ship.mp4"                                   # compact copy of the gated master: flat graphics compress well
         if not ship.exists() or ship.stat().st_mtime < f.stat().st_mtime:
-            r = C.ff("-i", str(f), "-c:v", "libx264", "-preset", "slow", "-crf", "28", "-tune", "animation", "-pix_fmt", "yuv420p",
+            r = C.ff("-i", str(f), "-c:v", "libx264", "-preset", "slow", "-crf", str(sp.get("ship_crf", 28)), "-tune", "animation", "-pix_fmt", "yuv420p",
                      "-c:a", "aac", "-b:a", "96k", "-movflags", "+faststart", str(ship))
             if r.returncode:
                 C.fail("could not encode the shipped copy: " + r.stderr[-300:])
