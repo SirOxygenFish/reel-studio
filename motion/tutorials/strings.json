@@ -2,18 +2,45 @@
  "_about": "Tutorial texts. Captions are in the viewer's language. On-screen labels of the Claude desktop app stay English (the app has no Russian or Polish interface). iOS labels are translated only where the localized wording is certain (Share, Add to Home Screen, Add, Cancel, Done, Copy, Photos, Shortcuts); otherwise the English label is shown and the caption describes it. No long dashes anywhere.",
  "en": {
   "t1": {
-   "title": "Set up the computer", "sub": "Two switches in Settings, then a new session",
+   "title": "Set up the computer",
+   "sub": "Every click, from the Code tab to the install",
+   "c_codeTab": "Top left: click the </> icon. This opens Code (this is Claude Code)",
    "c_settings": "Open Settings: click your name in the bottom left corner, then Settings",
    "c_code": "In the list on the left, choose Claude Code",
    "c_scroll": "Scroll down to the Remote Control section",
    "c_first": "Turn on the first switch",
    "c_middle": "Leave the middle one off",
    "c_third": "Turn on the third switch",
-   "c_after": "After the installation, start a new session in your videos folder",
-   "c_new": "Click New session, then choose a folder",
-   "c_pick": "Pick Videos, then Reels, and click Select folder",
-   "end_title": "Ready", "end_rows": ["Remote Control switches: on, off, on", "One session in the videos folder", "From now on, work from your phone"],
-   "leaveOff": "leave off", "name": "Your name", "initial": "Y"
+   "c_new": "Click New to start a new chat",
+   "c_env": "At the bottom, open the first menu and choose This computer",
+   "c_choose": "Click Choose…, then Open folder…",
+   "c_create": "Create a new folder anywhere you like (for example Reels) and choose it",
+   "c_videos": "This folder is now your videos folder",
+   "c_model": "Click the model at the bottom and choose Opus 5.5",
+   "c_effort": "Then Effort: choose High",
+   "c_perm": "Click Accept edits and choose Auto",
+   "c_github": "Open the install prompt on GitHub and click the copy button",
+   "c_paste": "Paste it into this chat and send it",
+   "c_allow": "When Claude asks, click Allow",
+   "c_wait": "Wait until Claude says it has finished (10 to 30 minutes)",
+   "c_reload": "Then type /reload-plugins and send it",
+   "c_ready": "Reel Studio now works in this chat",
+   "end_title": "Ready",
+   "end_rows": [
+    "Keep using THIS chat every day",
+    "Any question later (Tailscale, problems): ask this same chat"
+   ],
+   "name": "Your name",
+   "initial": "Y",
+   "leaveOff": "leave off",
+   "ghPath": "reel-studio / docs / INSTALL_PROMPT.md",
+   "promptTitle": "Install prompt (English)",
+   "promptStart": "Please install Reel Studio on this computer for me.",
+   "r1": "I will check this computer first.",
+   "permAsk": "Claude wants to run a command",
+   "working": "Installing. I will tell you how far it is.",
+   "finished": "Finished.",
+   "finished2": "Now send /reload-plugins in this chat."
   },
   "t2": {
    "title": "Your iPhone",
@@ -39,7 +66,11 @@
    "s_allow": "First time only: tap Always Allow",
    "s_photos": "The Reel is in Photos",
    "end_title": "Every day",
-   "end_rows": ["Upload the clips", "Claude app: make a Reel", "Upload page: To gallery"],
+   "end_rows": [
+    "Upload the clips",
+    "Claude app: make a Reel",
+    "Upload page: To gallery"
+   ],
    "done": "Done",
    "cancel": "Cancel",
    "add": "Add",
@@ -47,7 +78,16 @@
    "copy": "Copy",
    "favorites": "Add to Favorites",
    "photos": "Photos",
-   "apps": ["Calendar", "Notes", "Maps", "Music", "Camera", "Clock", "Weather", "Settings"],
+   "apps": [
+    "Calendar",
+    "Notes",
+    "Maps",
+    "Music",
+    "Camera",
+    "Clock",
+    "Weather",
+    "Settings"
+   ],
    "chatEmpty": "How can I help you today?",
    "sessNote": "Your computer, online",
    "command": "make a Reel",
@@ -57,18 +97,45 @@
  },
  "ru": {
   "t1": {
-   "title": "Настройка компьютера", "sub": "Два переключателя в настройках и новая сессия",
+   "title": "Настройка компьютера",
+   "sub": "Каждый щелчок, от вкладки Code до установки",
+   "c_codeTab": "Слева вверху нажмите значок </>. Откроется Code (это и есть Claude Code)",
    "c_settings": "Откройте настройки: нажмите на своё имя внизу слева, затем Settings",
    "c_code": "В списке слева выберите Claude Code",
    "c_scroll": "Прокрутите вниз до раздела Remote Control",
    "c_first": "Включите первый переключатель",
    "c_middle": "Средний не трогайте, он остаётся выключенным",
    "c_third": "Включите третий переключатель",
-   "c_after": "После установки начните новую сессию в папке с видео",
-   "c_new": "Нажмите New session и выберите папку",
-   "c_pick": "Откройте Videos, выберите Reels и нажмите Select folder",
-   "end_title": "Готово", "end_rows": ["Переключатели Remote Control: вкл, выкл, вкл", "Одна сессия в папке с видео", "Дальше всё делается с телефона"],
-   "leaveOff": "не включать", "name": "Ваше имя", "initial": "В"
+   "c_new": "Нажмите New, чтобы начать новый чат",
+   "c_env": "Внизу откройте первое меню и выберите This computer",
+   "c_choose": "Нажмите Choose…, затем Open folder…",
+   "c_create": "Создайте новую папку где угодно (например, Reels) и выберите её",
+   "c_videos": "Теперь это ваша папка с видео",
+   "c_model": "Нажмите на модель внизу и выберите Opus 5.5",
+   "c_effort": "Затем Effort: выберите High",
+   "c_perm": "Нажмите Accept edits и выберите Auto",
+   "c_github": "Откройте текст для установки на GitHub и нажмите кнопку копирования",
+   "c_paste": "Вставьте его в этот чат и отправьте",
+   "c_allow": "Когда Claude спросит, нажмите Allow",
+   "c_wait": "Дождитесь, пока Claude напишет, что всё готово (от 10 до 30 минут)",
+   "c_reload": "Потом напишите /reload-plugins и отправьте",
+   "c_ready": "Теперь Reel Studio работает в этом чате",
+   "end_title": "Готово",
+   "end_rows": [
+    "Каждый день пользуйтесь ЭТИМ чатом",
+    "Любой вопрос потом (Tailscale, проблемы): спросите этот же чат"
+   ],
+   "name": "Ваше имя",
+   "initial": "В",
+   "leaveOff": "не включать",
+   "ghPath": "reel-studio / docs / INSTALL_PROMPT.ru.md",
+   "promptTitle": "Текст для установки (русский)",
+   "promptStart": "Пожалуйста, установи Reel Studio на этот компьютер.",
+   "r1": "Сначала проверю этот компьютер.",
+   "permAsk": "Claude хочет выполнить команду",
+   "working": "Устанавливаю. Буду писать, сколько осталось.",
+   "finished": "Готово.",
+   "finished2": "Теперь отправьте в этом чате /reload-plugins."
   },
   "t2": {
    "title": "Ваш iPhone",
@@ -94,7 +161,11 @@
    "s_allow": "Только в первый раз: нажмите Always Allow",
    "s_photos": "Рилс уже в «Фото»",
    "end_title": "Каждый день",
-   "end_rows": ["Загрузите ролики", "Приложение Claude: монтируй", "Страница загрузки: В галерею"],
+   "end_rows": [
+    "Загрузите ролики",
+    "Приложение Claude: монтируй",
+    "Страница загрузки: В галерею"
+   ],
    "done": "Готово",
    "cancel": "Отменить",
    "add": "Добавить",
@@ -102,7 +173,16 @@
    "copy": "Скопировать",
    "favorites": "Добавить в избранное",
    "photos": "Фото",
-   "apps": ["Календарь", "Заметки", "Карты", "Музыка", "Камера", "Часы", "Погода", "Настройки"],
+   "apps": [
+    "Календарь",
+    "Заметки",
+    "Карты",
+    "Музыка",
+    "Камера",
+    "Часы",
+    "Погода",
+    "Настройки"
+   ],
    "chatEmpty": "Чем могу помочь?",
    "sessNote": "Ваш компьютер, на связи",
    "command": "монтируй",
@@ -112,18 +192,45 @@
  },
  "pl": {
   "t1": {
-   "title": "Ustawienia komputera", "sub": "Dwa przełączniki w ustawieniach i nowa sesja",
+   "title": "Ustawienia komputera",
+   "sub": "Każde kliknięcie, od karty Code do instalacji",
+   "c_codeTab": "W lewym górnym rogu kliknij ikonę </>. Otworzy się Code (to jest Claude Code)",
    "c_settings": "Otwórz ustawienia: kliknij swoje imię w lewym dolnym rogu, potem Settings",
    "c_code": "Na liście po lewej wybierz Claude Code",
    "c_scroll": "Przewiń w dół do sekcji Remote Control",
    "c_first": "Włącz pierwszy przełącznik",
    "c_middle": "Środkowy zostaw wyłączony",
    "c_third": "Włącz trzeci przełącznik",
-   "c_after": "Po instalacji zacznij nową sesję w folderze z filmami",
-   "c_new": "Kliknij New session i wybierz folder",
-   "c_pick": "Otwórz Videos, wybierz Reels i kliknij Select folder",
-   "end_title": "Gotowe", "end_rows": ["Przełączniki Remote Control: wł., wył., wł.", "Jedna sesja w folderze z filmami", "Od teraz wszystko robisz z telefonu"],
-   "leaveOff": "nie włączaj", "name": "Twoje imię", "initial": "T"
+   "c_new": "Kliknij New, żeby zacząć nowy czat",
+   "c_env": "Na dole otwórz pierwsze menu i wybierz This computer",
+   "c_choose": "Kliknij Choose…, potem Open folder…",
+   "c_create": "Utwórz nowy folder, gdzie chcesz (na przykład Reels), i wybierz go",
+   "c_videos": "To jest teraz Twój folder z filmami",
+   "c_model": "Kliknij model na dole i wybierz Opus 5.5",
+   "c_effort": "Potem Effort: wybierz High",
+   "c_perm": "Kliknij Accept edits i wybierz Auto",
+   "c_github": "Otwórz tekst instalacji na GitHubie i kliknij przycisk kopiowania",
+   "c_paste": "Wklej go do tego czatu i wyślij",
+   "c_allow": "Gdy Claude zapyta, kliknij Allow",
+   "c_wait": "Poczekaj, aż Claude napisze, że skończył (10 do 30 minut)",
+   "c_reload": "Potem wpisz /reload-plugins i wyślij",
+   "c_ready": "Reel Studio działa teraz w tym czacie",
+   "end_title": "Gotowe",
+   "end_rows": [
+    "Na co dzień używaj TEGO czatu",
+    "Każde pytanie później (Tailscale, problemy): zapytaj ten sam czat"
+   ],
+   "name": "Twoje imię",
+   "initial": "T",
+   "leaveOff": "nie włączaj",
+   "ghPath": "reel-studio / docs / INSTALL_PROMPT.pl.md",
+   "promptTitle": "Tekst instalacji (polski)",
+   "promptStart": "Zainstaluj, proszę, Reel Studio na tym komputerze.",
+   "r1": "Najpierw sprawdzę ten komputer.",
+   "permAsk": "Claude chce uruchomić polecenie",
+   "working": "Instaluję. Będę pisać, ile zostało.",
+   "finished": "Gotowe.",
+   "finished2": "Teraz wyślij w tym czacie /reload-plugins."
   },
   "t2": {
    "title": "Twój iPhone",
@@ -149,7 +256,11 @@
    "s_allow": "Tylko za pierwszym razem: stuknij Always Allow",
    "s_photos": "Rolka jest w Zdjęciach",
    "end_title": "Na co dzień",
-   "end_rows": ["Wyślij nagrania", "Aplikacja Claude: zmontuj", "Strona wysyłania: Do galerii"],
+   "end_rows": [
+    "Wyślij nagrania",
+    "Aplikacja Claude: zmontuj",
+    "Strona wysyłania: Do galerii"
+   ],
    "done": "Gotowe",
    "cancel": "Anuluj",
    "add": "Dodaj",
@@ -157,7 +268,16 @@
    "copy": "Kopiuj",
    "favorites": "Dodaj do ulubionych",
    "photos": "Zdjęcia",
-   "apps": ["Kalendarz", "Notatki", "Mapy", "Muzyka", "Aparat", "Zegar", "Pogoda", "Ustawienia"],
+   "apps": [
+    "Kalendarz",
+    "Notatki",
+    "Mapy",
+    "Muzyka",
+    "Aparat",
+    "Zegar",
+    "Pogoda",
+    "Ustawienia"
+   ],
    "chatEmpty": "W czym mogę pomóc?",
    "sessNote": "Twój komputer, online",
    "command": "zmontuj",
@@ -167,11 +287,92 @@
  },
  "ui": {
   "t1": {
-   "settings": "Settings", "code": "Claude Code", "section": "Remote Control",
-   "nav": ["General", "Account", "Privacy", "Capabilities", "Connectors", "Claude Code"],
-   "toggles": ["Connect new sessions to Remote Control", "Let your phone and claude.ai start sessions here", "Keep this computer awake for Remote Control"],
-   "newSession": "New session", "choose": "Choose a folder…", "select": "Select folder",
-   "folders": ["Desktop", "Documents", "Downloads", "Videos"], "videos": "Videos", "reels": "Reels"
+   "settings": "Settings",
+   "code": "Claude Code",
+   "section": "Remote Control",
+   "nav": [
+    "General",
+    "Account",
+    "Privacy",
+    "Capabilities",
+    "Connectors",
+    "Claude Code"
+   ],
+   "toggles": [
+    "Connect new sessions to Remote Control",
+    "Let your phone and claude.ai start sessions here",
+    "Keep this computer awake for Remote Control"
+   ],
+   "codeTab": "Code",
+   "newBtn": "New",
+   "search": "Search",
+   "newSession": "New session",
+   "hint": "Describe a task or ask a question",
+   "env": "This computer",
+   "choose": "Choose…",
+   "searchFolders": "Search folders…",
+   "noFolder": "No folder",
+   "recent": "Recent",
+   "openFolder": "Open folder…",
+   "dlgTitle": "Select folder",
+   "newFolder": "New folder",
+   "select": "Select folder",
+   "folders": [
+    "Desktop",
+    "Documents",
+    "Downloads",
+    "Videos"
+   ],
+   "reels": "Reels",
+   "model": "Opus 5.5",
+   "models": [
+    "Opus 5.5",
+    "Fable 5.1",
+    "Sonnet 5.5",
+    "Haiku 5.5"
+   ],
+   "preset": "Preset",
+   "modelHdr": "Model · this session",
+   "effort": "Effort",
+   "moreModels": "More models",
+   "recommended": "Recommended",
+   "efforts": [
+    "Low",
+    "Medium",
+    "High",
+    "Extra",
+    "Max"
+   ],
+   "permHdr": "Permissions · this session",
+   "perms": [
+    [
+     "Auto",
+     "Claude handles permission decisions"
+    ],
+    [
+     "Manual",
+     "Always ask before making changes"
+    ],
+    [
+     "Accept edits",
+     "Automatically accept all file edits"
+    ],
+    [
+     "Plan",
+     "Create a plan before making changes"
+    ],
+    [
+     "Bypass permissions",
+     "Claude can modify or delete files without asking"
+    ]
+   ],
+   "ghUrl": "github.com/SirOxygenFish/reel-studio",
+   "copied": "Copied!",
+   "permCmd": "claude plugin install reel-studio@siroxygenfish",
+   "allow": "Allow",
+   "deny": "Deny",
+   "reloadCmd": "/reload-plugins",
+   "reloaded": "Reloaded: reel-studio"
   },
   "t2": {
    "pageHost": "192.168.1.20",
@@ -192,7 +393,12 @@
    "allowOnce": "Allow Once",
    "allowAlways": "Always Allow",
    "dontAllow": "Don’t Allow",
-   "editor": ["Receive <span class=\"v\">Text and URLs</span> input from <span class=\"v\">Nowhere</span><br>If there’s no input: <span class=\"v\">Continue</span>", "If <span class=\"v\">Shortcut Input</span> <span class=\"v\">has any value</span>", "Get contents of <span class=\"v\">Shortcut Input</span>", "Save <span class=\"v\">Contents of URL</span> to <span class=\"v\">Recents</span>"]
+   "editor": [
+    "Receive <span class=\"v\">Text and URLs</span> input from <span class=\"v\">Nowhere</span><br>If there’s no input: <span class=\"v\">Continue</span>",
+    "If <span class=\"v\">Shortcut Input</span> <span class=\"v\">has any value</span>",
+    "Get contents of <span class=\"v\">Shortcut Input</span>",
+    "Save <span class=\"v\">Contents of URL</span> to <span class=\"v\">Recents</span>"
+   ]
   }
  }
 }

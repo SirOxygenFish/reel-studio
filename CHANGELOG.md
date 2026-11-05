@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.2.0 (2026-11-05)
+
+Setup that shows every click, in one chat from start to finish.
+
+- Tutorial 1 rebuilt (about 80 s, English, Russian, Polish): the </> Code tab, the two Remote Control switches, a new chat on This computer in a folder you create (it becomes the videos folder), Opus 5.5 with Effort High, Auto permissions, pasting the install prompt, then /reload-plugins
+- The install prompt installs the plugin first (seconds), then runs the long setup, and uses the chat's own folder as the videos folder
+- No more "close this session and start a new one": the install chat stays the everyday chat; /reload-plugins turns Reel Studio on in it (fallback: quit and reopen the app, then open the same chat)
+- Start here guides follow the video step by step; after setup Effort can go down to Medium; questions later, Tailscale included, go to the same chat
+- Tutorial gate allows up to 90 s for Tutorial 1
+
 ## 1.1.0 (2026-11-03)
 
 For people who only use their phone.

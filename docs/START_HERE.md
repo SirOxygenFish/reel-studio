@@ -19,13 +19,22 @@ The computer does the work, so it has to be switched on with the Claude app open
 ## 2. On the computer, once
 
 1. **Install the Claude desktop app** from [claude.ai/download](https://claude.ai/download) and sign in.
-2. **Watch Tutorial 1** (40 seconds): [English](https://github.com/SirOxygenFish/reel-studio/raw/main/docs/tutorials/tutorial1-pc.en.mp4) · [Русский](https://github.com/SirOxygenFish/reel-studio/raw/main/docs/tutorials/tutorial1-pc.ru.mp4) · [Polski](https://github.com/SirOxygenFish/reel-studio/raw/main/docs/tutorials/tutorial1-pc.pl.mp4). The video opens or downloads; play it.
-3. **Two switches.** In the app: your name at the bottom left, then **Settings**, then **Claude Code**, then scroll to **Remote Control**:
+2. **Watch Tutorial 1** (about 80 seconds, it shows every click below): [English](https://github.com/SirOxygenFish/reel-studio/raw/main/docs/tutorials/tutorial1-pc.en.mp4) · [Русский](https://github.com/SirOxygenFish/reel-studio/raw/main/docs/tutorials/tutorial1-pc.ru.mp4) · [Polski](https://github.com/SirOxygenFish/reel-studio/raw/main/docs/tutorials/tutorial1-pc.pl.mp4). The video opens or downloads; play it.
+3. **Open Code.** At the top left, click the **</>** icon. The tab is called **Code** (this is Claude Code).
+4. **Two switches.** Your name at the bottom left, then **Settings**, then **Claude Code**, then scroll to **Remote Control**:
    - **Connect new sessions to Remote Control**: turn **on**
    - **Let your phone and claude.ai start sessions here**: leave **off**
    - **Keep this computer awake for Remote Control**: turn **on**
-4. **Install.** Open the **Code** tab, start a **New session** (any folder), copy the whole text from [the install prompt](INSTALL_PROMPT.md) and send it. Claude asks for permission before it runs commands: allow them. If it shows you a command that needs an administrator password, paste it where it says and tell Claude when it is done. The setup takes 10 to 30 minutes.
-5. **The videos folder.** When Claude says it is finished, close that session and start a **New session** in the videos folder it names (normally `Reels` in your Videos folder, or in Movies on a Mac). This is the session you will use every day from the phone. Leave it open.
+
+   Do this before the next step.
+5. **A new chat.** Click **New**. Under the message box:
+   - the first menu: choose **This computer**
+   - **Choose…**, then **Open folder…**: create a new folder anywhere you like (for example **Reels**) and choose it. This folder becomes your videos folder.
+   - the model: choose **Opus 5.5**, then **Effort**, then **High**
+   - **Accept edits**: change it to **Auto**
+6. **Install.** Copy the whole text from [the install prompt](INSTALL_PROMPT.md), paste it into this chat and send it. When Claude asks for permission, click **Allow**. If it shows you a command that needs an administrator password, paste it where it says and tell Claude when it is done. The setup takes 10 to 30 minutes.
+7. **Turn Reel Studio on in this chat.** When Claude says it has finished, type **/reload-plugins** in the same chat and send it. If Claude still does not know Reel Studio after that, quit the Claude app completely (also from the taskbar tray or the menu bar), open it again and open the same chat.
+8. **Keep using this chat.** This is your Reel Studio chat from now on, also from the phone. Do not start a new one: this chat already knows your setup. After setup you can lower **Effort** to **Medium** to save usage. If anything is unclear later (Tailscale, errors, changes), just ask this same chat in plain words.
 
 ## 3. On the iPhone, once
 
@@ -37,12 +46,12 @@ The computer does the work, so it has to be switched on with the Claude app open
 
 ## 4. Optional: away from home
 
-The upload page only answers at home, on your own Wi-Fi. To use it anywhere, install the free **Tailscale** app on the computer and on the iPhone ([tailscale.com/download](https://tailscale.com/download)), sign in to both with the same account and switch it on. Then the desktop icon **Reel Studio phone link** shows a second QR code for "away from home": add that one to the Home Screen too.
+The upload page only answers at home, on your own Wi-Fi. To use it anywhere, you need the free **Tailscale** app on the computer and on the iPhone ([tailscale.com/download](https://tailscale.com/download)). Ask your Claude chat to walk you through it, for example: "help me set up Tailscale". When it works, the desktop icon **Reel Studio phone link** shows a second QR code for "away from home": add that one to the Home Screen too.
 
 ## 5. Every day
 
 1. iPhone: **Reel Studio** icon, choose the clips, **Send**.
-2. Claude app: **Code**, your computer's session.
+2. Claude app: **Code**, your computer's session (the same chat as always).
 3. Write: **make a Reel** (add anything special you want).
 4. Wait for Claude to say it is done.
 5. Upload page: **To gallery**. The Reel is in Photos.

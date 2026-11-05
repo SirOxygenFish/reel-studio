@@ -369,6 +369,187 @@
     return player(api, root, p);
   });
 
+  // ---------- Tutorial 1 (1.2.0): the Code tab, every click ----------
+  // Clean generic drawings laid out after the real Windows desktop app (layout and button positions only; nothing copied).
+  const CSS3 = `
+  .cw .bar { gap:10px; padding:0 18px; }
+  .cw .gi { width:34px; height:34px; border-radius:9px; background:var(--dim); opacity:.45; flex:none; }
+  .cw .tg { position:relative; display:flex; gap:4px; padding:4px; border-radius:12px; background:var(--line); margin-left:6px; flex:none; }
+  .cw .tg .pill { position:absolute; top:4px; width:52px; height:42px; border-radius:9px; background:var(--paper); box-shadow:0 2px 0 var(--dim); }
+  .cw .tg .ti { position:relative; z-index:1; width:52px; height:42px; display:flex; align-items:center; justify-content:center; color:var(--ink); }
+  .mono { font-family:Consolas,"Cascadia Mono","DejaVu Sans Mono",monospace; font-weight:800; letter-spacing:-1px; }
+  .bubi { width:26px; height:20px; border:3px solid var(--ink); border-radius:8px; position:relative; }
+  .bubi:after { content:''; position:absolute; left:3px; bottom:-8px; border:5px solid transparent; border-top-color:var(--ink); border-left-color:var(--ink); }
+  .cw .tip { position:absolute; left:250px; top:64px; z-index:16; background:var(--ink); color:var(--paper); font-size:28px; font-weight:700; padding:10px 18px; border-radius:12px;
+             display:flex; gap:12px; align-items:center; white-space:nowrap; }
+  .cw .wt2 { font-size:24px; font-weight:600; color:var(--muted); margin-left:18px; }
+  .cw .plus2 { width:30px; text-align:center; font-weight:800; font-size:32px; flex:none; }
+  .cw .gear { width:36px; height:36px; border-radius:50%; border:5px dotted var(--muted); margin-left:auto; flex:none; }
+  .cbox { position:absolute; left:60px; right:60px; bottom:84px; min-height:78px; border-radius:20px; border:3px solid var(--line); background:var(--paper);
+          display:flex; align-items:center; gap:18px; padding:12px 16px 12px 22px; }
+  .cbox .pl { font-size:32px; font-weight:800; color:var(--muted); flex:none; }
+  .cbox .hintx { font-size:26px; color:var(--muted); position:absolute; left:70px; top:50%; margin-top:-17px; white-space:nowrap; }
+  .cbox .tx { flex:1; font-size:28px; font-weight:700; color:var(--ink); min-height:36px; }
+  .cbox .pasted { position:absolute; left:70px; right:90px; top:12px; bottom:12px; font-size:24px; color:var(--ink); display:flex; flex-direction:column; justify-content:center; gap:8px; overflow:hidden; }
+  .cbox .sendb { width:50px; height:50px; border-radius:50%; background:var(--acc); flex:none; position:relative; margin-left:auto; }
+  .cbox .sendb:after { content:''; position:absolute; left:15px; top:13px; border-bottom:18px solid var(--paper); border-left:10px solid transparent; border-right:10px solid transparent; }
+  .chips { position:absolute; left:60px; right:60px; bottom:18px; height:54px; display:flex; align-items:center; gap:14px; }
+  .ch { display:inline-flex; align-items:center; gap:10px; font-size:25px; font-weight:700; color:var(--ink); padding:8px 14px; border-radius:10px; white-space:nowrap; }
+  .ch .mut { color:var(--muted); font-weight:600; }
+  .swap { display:inline-grid; } .swap > * { grid-area:1/1; }
+  .cv { width:11px; height:11px; border-right:3px solid var(--muted); border-bottom:3px solid var(--muted); transform:rotate(45deg) translate(-3px,-3px); flex:none; }
+  .cvr { width:11px; height:11px; border-right:3px solid var(--muted); border-bottom:3px solid var(--muted); transform:rotate(-45deg); flex:none; margin-left:8px; }
+  .pci { width:30px; height:21px; border:3px solid var(--ink); border-radius:4px; flex:none; position:relative; margin-bottom:5px; }
+  .pci:after { content:''; position:absolute; left:4px; right:4px; bottom:-9px; height:3px; background:var(--ink); }
+  .fi2 { width:30px; height:22px; border:3px solid var(--ink); border-radius:3px 3px 5px 5px; flex:none; position:relative; }
+  .fi2:before { content:''; position:absolute; left:-3px; top:-9px; width:12px; height:6px; border:3px solid var(--ink); border-bottom:0; border-radius:3px 3px 0 0; }
+  .mn { position:absolute; background:var(--paper); border-radius:18px; box-shadow:var(--sh); border:2px solid var(--line); padding:10px; z-index:12; }
+  .mi { display:flex; align-items:center; gap:14px; font-size:26px; font-weight:600; color:var(--ink); padding:10px 16px; border-radius:10px; white-space:nowrap; }
+  .mi.sel { background:var(--c1x); }
+  .mi .sb2 { font-size:21px; color:var(--muted); font-weight:500; margin-top:3px; white-space:normal; }
+  .mi .val { margin-left:auto; color:var(--muted); font-size:23px; display:flex; align-items:center; }
+  .mh { font-size:21px; font-weight:700; color:var(--muted); padding:10px 16px 4px; }
+  .msep { height:2px; background:var(--line); margin:8px 6px; }
+  .mfield { font-size:24px; color:var(--muted); padding:10px 16px; border-bottom:2px solid var(--line); margin-bottom:6px; }
+  .ck { width:24px; height:13px; border-left:4px solid var(--c1); border-bottom:4px solid var(--c1); transform:rotate(-45deg) translate(2px,-3px); margin-left:auto; flex:none; }
+  .tagp { font-size:18px; color:var(--muted); border:2px solid var(--line); border-radius:8px; padding:1px 8px; }
+  .nfbox { display:inline-block; min-width:220px; border:3px solid var(--c1); border-radius:6px; padding:2px 10px; min-height:44px; }
+  .gh .url { flex:1; max-width:1000px; height:38px; border-radius:19px; background:var(--paper); border:2px solid var(--line); font-size:22px; color:var(--muted);
+             display:flex; align-items:center; padding:0 22px; margin-left:20px; white-space:nowrap; overflow:hidden; }
+  .codeb { position:relative; margin-top:22px; border-radius:16px; background:var(--c1x); border:2px solid var(--line); padding:30px 34px; display:flex; flex-direction:column; gap:16px; }
+  .codeb .l1 { font-size:24px; color:var(--ink); }
+  .cpy { position:absolute; right:18px; top:16px; width:58px; height:58px; border-radius:12px; background:var(--paper); border:2px solid var(--line); }
+  .cpy:before, .cpy:after { content:''; position:absolute; width:18px; height:22px; border:3px solid var(--ink); border-radius:4px; background:var(--paper); }
+  .cpy:before { left:14px; top:12px; } .cpy:after { left:22px; top:20px; }
+  .cptip { position:absolute; right:0; top:-54px; background:var(--ink); color:var(--paper); font-size:22px; font-weight:700; padding:6px 14px; border-radius:8px; white-space:nowrap; }
+  .msgs { position:absolute; left:80px; right:80px; top:26px; display:flex; flex-direction:column; gap:20px; }
+  .um { align-self:flex-end; max-width:70%; background:var(--c1x); border-radius:18px; padding:16px 22px; font-size:24px; color:var(--ink); display:flex; flex-direction:column; gap:10px; }
+  .cm { display:flex; flex-direction:column; gap:10px; font-size:25px; color:var(--ink); max-width:80%; }
+  .cm b { font-weight:800; }
+  .permc { border:3px solid var(--line); border-radius:16px; padding:18px 22px; display:flex; flex-direction:column; gap:14px; background:var(--paper); max-width:80%; }
+  .permc .cmd { font-size:22px; background:var(--c1x); border-radius:8px; padding:8px 14px; }
+  .permc .btns { display:flex; gap:14px; }
+  .sbtn { font-size:24px; font-weight:800; padding:10px 24px; border-radius:10px; background:var(--acc); color:var(--on-acc); }
+  .sbtn.ghost { background:var(--paper); color:var(--ink); border:2px solid var(--line); }
+  .okline { display:flex; align-items:center; gap:14px; font-size:25px; font-weight:700; color:var(--ink); }
+  .okline .tk { width:34px; height:34px; border-radius:50%; background:var(--good); position:relative; flex:none; }
+  .okline .tk:after { content:''; position:absolute; left:9px; top:9px; width:13px; height:7px; border-left:4px solid var(--paper); border-bottom:4px solid var(--paper); transform:rotate(-45deg); }
+  `;
+  if (!document.getElementById('tut-css3')) {
+    const s = document.createElement('style'); s.id = 'tut-css3'; s.textContent = CSS3; document.head.appendChild(s);
+  }
+  const pick = (fin, a, b, ka, kb) => fin ? esc(b) : `<span class="swap"><span data-k="${ka}">${esc(a)}</span><span data-k="${kb}">${esc(b)}</span></span>`;
+
+  // the Code tab window: o.mode 'chat' starts on the chat side (the toggle scene); o.st = choices already made; o.anim = the chip that changes here
+  function codeWin(p, o = {}) {
+    const L = p.labels, st = o.st || {}, an = o.anim || '';
+    const codeIc = `<span class="mono" style="font-size:24px">&lt;/&gt;</span>`;
+    const toggle = `<div class="tg">` + (o.mode === 'chat' ? `<div class="pill" data-k="pillA" style="left:4px"></div><div class="pill" data-k="pillB" style="left:60px"></div>`
+                                                             : `<div class="pill" style="left:60px"></div>`) +
+      `<div class="ti" data-k="tg_chat"><div class="bubi"></div></div><div class="ti" data-k="tg_code">${codeIc}</div></div>`;
+    const bar = `<div class="bar"><div class="gi"></div><div class="gi"></div><div class="gi"></div><div class="gi"></div>${toggle}` +
+      `<div class="wt2">${esc(o.title || L.newSession)}</div></div>`;
+    const tip = o.tip ? `<div class="tip" data-k="tip">${codeIc}${esc(L.codeTab)}</div>` : '';
+    const side = `<div class="tside"><div class="item" data-k="new"><span class="plus2">+</span>${esc(L.newBtn)}</div>` +
+      `<div class="item"><div class="gl"></div>${esc(L.search)}</div><div class="item"><div class="gl"></div>${phs(1)}</div>` +
+      (st.sess ? `<div style="height:20px"></div><div class="item sel"><div class="gl"></div>${esc(st.sess)}</div>` : `<div class="item"><div class="gl"></div>${phs(1)}</div>`) +
+      `<div style="flex:1"></div><div class="user"><div class="av round">${esc(L.initial)}</div>${esc(L.name)}<div class="gear round"></div></div></div>`;
+    const comp = `<div class="cbox" data-k="input"><div class="pl">+</div>` + (o.noHint ? '' : `<div class="hintx" data-k="hint">${esc(L.hint)}</div>`) +
+      `<div class="tx" data-k="typed"></div>${o.pasted || ''}<div class="sendb round" data-k="send"></div></div>`;
+    const chips = `<div class="chips"><div class="ch" data-k="env"><div class="pci"></div>${esc(L.env)}<span class="cv"></span></div>` +
+      `<div class="ch" data-k="choose"><div class="fi2"></div>${an === 'folder' ? pick(false, L.choose, L.reels, 'chA', 'chB') : esc(st.folder ? L.reels : L.choose)}<span class="cv"></span></div>` +
+      `<div style="flex:1"></div><div class="ch" data-k="model">${esc(L.model)} <span class="mut">${an === 'effort' ? pick(false, L.efforts[1], L.efforts[2], 'efA', 'efB') : esc(st.effort ? L.efforts[2] : L.efforts[1])}</span></div>` +
+      `<div class="ch" data-k="perm">${an === 'perm' ? pick(false, L.perms[2][0], L.perms[0][0], 'pmA', 'pmB') : esc(st.perm ? L.perms[0][0] : L.perms[2][0])}</div></div>`;
+    const codeLayer = `<div data-k="codelay" style="position:absolute;inset:0">${o.body || ''}${comp}${chips}</div>`;
+    const chatLayer = o.mode === 'chat' ? `<div data-k="chatlay" style="position:absolute;inset:0;padding:60px 120px"><div class="h1" style="opacity:.3">${phs(1)}</div><div style="height:30px"></div>${phs(5)}` +
+      `<div class="cbox" style="left:120px;right:120px"><div class="pl">+</div>${phs(1)}</div></div>` : '';
+    const main = `<div class="main" style="padding:0">${chatLayer}${codeLayer}${o.menus || ''}</div>`;
+    return `<div class="win cw">${bar}<div class="body">${side}${main}</div>${tip}</div>`;
+  }
+
+  RM.def('t1_code', (api, root) => {
+    root.innerHTML = frame(api.p, codeWin(api.p, { mode: 'chat', tip: true }));
+    return player(api, root, api.p);
+  });
+
+  RM.def('t1_new', (api, root) => {
+    const L = api.p.labels;
+    const menus = `<div class="mn" data-k="envmenu" style="left:50px;bottom:84px;width:360px"><div class="mi" data-k="env_pc"><div class="pci"></div>${esc(L.env)}<div class="ck"></div></div>` +
+      `<div class="mi">${phs(1)}</div><div class="mi">${phs(1)}</div></div>`;
+    root.innerHTML = frame(api.p, codeWin(api.p, { menus }));
+    return player(api, root, api.p);
+  });
+
+  RM.def('t1_folder', (api, root) => {
+    const L = api.p.labels;
+    const fmenu = `<div class="mn" data-k="fmenu" style="left:250px;bottom:84px;width:380px"><div class="mfield">${esc(L.searchFolders)}</div>` +
+      `<div class="mi">${esc(L.noFolder)}<div class="ck"></div></div><div class="mh">${esc(L.recent)}</div>` +
+      `<div class="mi">${phs(1)}</div><div class="mi">${phs(1)}</div><div class="mi">${phs(1)}</div><div class="msep"></div>` +
+      `<div class="mi" data-k="openf">${esc(L.openFolder)}</div></div>`;
+    const folders = L.folders.map(f => `<div class="fold" style="font-size:27px;padding:8px 14px"><div class="fi"></div>${esc(f)}</div>`).join('');
+    const dlg = `<div class="dlg" data-k="dlg" style="left:110px;top:24px;width:900px;padding:22px 28px">` +
+      `<div style="display:flex;align-items:center;gap:20px"><div class="h2" style="margin:0;font-size:32px">${esc(L.dlgTitle)}</div><div style="flex:1"></div>` +
+      `<div class="tbtn ghost" data-k="newf" style="font-size:25px;padding:10px 20px">+ ${esc(L.newFolder)}</div></div>` +
+      `<div style="margin-top:14px">${folders}<div class="fold" data-k="nf" style="font-size:27px;padding:8px 14px"><div class="fi"></div><span class="nfbox" data-k="nfname"></span></div></div>` +
+      `<div style="display:flex;justify-content:flex-end;margin-top:14px"><div class="tbtn" data-k="select" style="font-size:26px;padding:12px 26px">${esc(L.select)}</div></div></div>`;
+    root.innerHTML = frame(api.p, codeWin(api.p, { anim: 'folder', menus: fmenu + dlg }));
+    return player(api, root, api.p);
+  });
+
+  RM.def('t1_model', (api, root) => {
+    const L = api.p.labels;
+    const mm = `<div class="mn" data-k="mmenu" style="right:200px;bottom:84px;width:400px"><div class="mh">${esc(L.modelHdr)}</div>` +
+      L.models.map((m, i) => `<div class="mi" ${i === 0 ? 'data-k="m_opus"' : ''}>${esc(m)}${i === 0 ? `<span class="tagp">${esc(L.preset)}</span><div class="ck"></div>` : ''}</div>`).join('') +
+      `<div class="msep"></div><div class="mi" data-k="m_effort">${esc(L.effort)}<span class="val">${esc(L.efforts[1])}<span class="cvr"></span></span></div>` +
+      `<div class="mi">${esc(L.moreModels)}<span class="val"><span class="cvr"></span></span></div></div>`;
+    const em = `<div class="mn" data-k="emenu" style="right:612px;bottom:150px;width:380px"><div class="mh" style="padding-bottom:10px">${phs(2)}</div>` +
+      L.efforts.map((e, i) => `<div class="mi" ${i === 2 ? 'data-k="e_high"' : ''}>${esc(e)}` +
+        (i === 1 ? `<span class="tagp">${esc(L.recommended)}</span><div class="ck" data-k="ck_med"></div>` : i === 2 ? `<div class="ck" data-k="ck_high"></div>` : '') + `</div>`).join('') + `</div>`;
+    root.innerHTML = frame(api.p, codeWin(api.p, { st: { folder: 1 }, anim: 'effort', menus: mm + em }));
+    return player(api, root, api.p);
+  });
+
+  RM.def('t1_perm', (api, root) => {
+    const L = api.p.labels;
+    const pm = `<div class="mn" data-k="pmenu" style="right:40px;bottom:84px;width:500px"><div class="mh">${esc(L.permHdr)}</div>` +
+      L.perms.map(([a, b], i) => `<div class="mi" ${i === 0 ? 'data-k="p_auto"' : ''}><div style="flex:1"><div>${esc(a)}</div><div class="sb2">${esc(b)}</div></div>` +
+        (i === 0 ? `<div class="ck" data-k="ck_auto"></div>` : i === 2 ? `<div class="ck" data-k="ck_acc"></div>` : '') + `</div>`).join('') + `</div>`;
+    root.innerHTML = frame(api.p, codeWin(api.p, { st: { folder: 1, effort: 1 }, anim: 'perm', menus: pm }));
+    return player(api, root, api.p);
+  });
+
+  RM.def('t1_github', (api, root) => {
+    const L = api.p.labels;
+    const bar = `<div class="bar"><div class="gi" style="width:30px;height:30px;border-radius:8px"></div><div class="gi" style="width:30px;height:30px"></div><div class="url">${esc(L.ghUrl)}</div></div>`;
+    const main = `<div class="main" style="padding:30px 120px"><div style="font-size:24px;color:var(--muted)">${esc(L.ghPath)}</div>` +
+      `<div class="h1" style="margin-top:10px">${esc(L.promptTitle)}</div><div style="height:16px"></div>${phs(1)}` +
+      `<div class="codeb" data-k="codebox"><div class="l1 mono" style="font-weight:600;letter-spacing:0">${esc(L.promptStart)}</div>${phs(6)}` +
+      `<div class="cpy" data-k="copy"><div class="cptip" data-k="copied">${esc(L.copied)}</div></div></div></div>`;
+    root.innerHTML = frame(api.p, `<div class="win cw gh">${bar}<div class="body">${main}</div></div>`);
+    return player(api, root, api.p);
+  });
+
+  RM.def('t1_chat', (api, root) => {
+    const p = api.p, L = p.labels, st = { folder: 1, effort: 1, perm: 1, sess: L.reels };
+    const um = `<div class="um" data-k="umsg"><div>${esc(L.promptStart)}</div>${phs(2)}</div>`;
+    let body;
+    if (p.mode === 'install') {
+      body = `<div class="msgs">${um}<div class="cm" data-k="reply"><div>${esc(L.r1)}</div>${phs(1)}</div>` +
+        `<div class="permc" data-k="permcard"><div style="font-size:25px;font-weight:700">${esc(L.permAsk)}</div><div class="cmd mono" style="font-weight:600;letter-spacing:0">${esc(L.permCmd)}</div>` +
+        `<div class="btns"><div class="sbtn" data-k="allow">${esc(L.allow)}</div><div class="sbtn ghost">${esc(L.deny)}</div></div></div>` +
+        `<div class="cm" data-k="working"><div>${esc(L.working)}</div>${phs(1)}</div></div>`;
+      const pasted = `<div class="pasted" data-k="pasted"><div>${esc(L.promptStart)}</div>${phs(1)}</div>`;
+      root.innerHTML = frame(p, codeWin(p, { st, title: L.reels, body, pasted }));
+    } else {
+      body = `<div class="msgs"><div class="um"><div>${esc(L.promptStart)}</div>${phs(1)}</div><div class="cm">${phs(2)}</div>` +
+        `<div class="cm" data-k="fin"><div><b>${esc(L.finished)}</b></div><div>${esc(L.finished2)}</div></div>` +
+        `<div class="um" data-k="umsg2"><div class="mono" style="font-weight:600;letter-spacing:0">${esc(L.reloadCmd)}</div></div>` +
+        `<div class="okline" data-k="reloaded"><div class="tk"></div>${esc(L.reloaded)}</div></div>`;
+      root.innerHTML = frame(p, codeWin(p, { st, title: L.reels, body }));
+    }
+    return player(api, root, p);
+  });
+
   // ---------- Tutorial 2: the iPhone ----------
   // One step = one screen and one tap. The phone is an iPhone 11 Pro screen in its own units (375 x 812 CSS px), scaled up once
   // and never moved, so text stays sharp. Page screens are real renders of the upload page (scripts/tutorials.py -> shots.mjs);
