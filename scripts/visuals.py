@@ -50,6 +50,7 @@ ZONES = {                          # rectangles for sticker CENTRES
     "LO": (120, 1600, 960, 1880), "TOP": (200, 130, 880, 430)}
 RNG = random.Random(7)
 ZOOM_AMP, ZOOM_PERIOD = 0.035, 12.0      # no scale jumps, kicks or shakes on the face: one slow eased push-in and pull-out
+Q = C.quality()                    # v2: the base is 4K (render.py), explicit BT.709 in and out; v1 (--old-quality): the 1.0 path
 
 
 def cut_frames(src):
@@ -61,7 +62,10 @@ def cut_frames(src):
     g_ = np.frombuffer(r_, np.uint8).reshape(-1, 240, 135).astype(np.float32); d_ = np.r_[0, np.abs(g_[1:] - g_[:-1]).mean((1, 2))]
     out_ = []
     for x in t_:
-        n0 = round(x * FPS); lo = max(1, n0 - 4); out_.append(lo + int(np.argmax(d_[lo:n0 + 5])))
+        n0 = round(x * FPS); lo = max(1, n0 - 4)
+        if lo >= len(d_):                                     # render --limit: the joins past the end are not in this base
+            break
+        out_.append(lo + int(np.argmax(d_[lo:n0 + 5])))
     return out_
 
 
@@ -384,25 +388,46 @@ def main():
     json.dump(sfx if cfg.get("sfx") else [], open(os.path.splitext(out)[0] + "_sfx.json", "w"))
     json.dump({"dropped": dropped, "still_over_2_2": [[round(a, 2), round(b, 2)] for a, b in still]}, open("visuals_report.json", "w"), ensure_ascii=False)
 
-    dec = subprocess.Popen([FF, "-v", "error", "-i", src, "-f", "rawvideo", "-pix_fmt", "rgb24", "-"], stdout=subprocess.PIPE)
     import shutil
     fd = Path("_fonts"); fd.mkdir(exist_ok=True)
     if FONT and not (fd / Path(FONT).name).exists():
         shutil.copy(FONT, fd / Path(FONT).name)
-    enc = subprocess.Popen([FF, "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-",
-                            "-i", src, "-map", "0:v", "-map", "1:a", "-vf", f"ass={ass}:fontsdir=_fonts",
-                            "-c:v", "libx264", "-preset", "medium", "-crf", "20", "-pix_fmt", "yuv420p", "-c:a", "copy", out],
-                           stdin=subprocess.PIPE)
+    if Q == "v1":                                             # the 1.0 path: default rgb24 decode, untagged CRF 20 output
+        BW, BH = W, H
+        dec = subprocess.Popen([FF, "-v", "error", "-i", src, "-f", "rawvideo", "-pix_fmt", "rgb24", "-"], stdout=subprocess.PIPE)
+        enc = subprocess.Popen([FF, "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-",
+                                "-i", src, "-map", "0:v", "-map", "1:a", "-vf", f"ass={ass}:fontsdir=_fonts",
+                                "-c:v", "libx264", "-preset", "medium", "-crf", "20", "-pix_fmt", "yuv420p", "-c:a", "copy", out],
+                               stdin=subprocess.PIPE)
+    else:                                                     # v2: the base at its own size (4K), explicit BT.709 everywhere
+        vs = next((s_ for s_ in C.probe(src).get("streams", []) if s_.get("codec_type") == "video"), {})
+        BW, BH = int(vs.get("width") or W), int(vs.get("height") or H)
+        dec = subprocess.Popen([FF, "-v", "error", "-i", src, "-vf", "scale=flags=accurate_rnd+full_chroma_int+full_chroma_inp:"
+                                "in_color_matrix=bt709:in_range=tv,format=rgb24", "-f", "rawvideo", "-"], stdout=subprocess.PIPE)
+        enc = subprocess.Popen([FF, "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-",
+                                "-i", src, "-map", "0:v", "-map", "1:a",
+                                "-vf", f"ass={ass}:fontsdir=_fonts,scale=out_color_matrix=bt709:out_range=tv:flags=accurate_rnd,format=yuv420p,{C.SETP709}",
+                                *C.FINAL_X264, "-c:a", "copy", out], stdin=subprocess.PIPE)
+    sx_, sy_ = BW / W, BH / H                                 # base pixels per output pixel: 2 for the 4K base, 1 for v1
+    down = (lambda f_: f_) if (BW, BH) == (W, H) else (lambda f_: np.array(Image.fromarray(f_).resize((W, H), Image.LANCZOS)))
+
+    def warp(f_, z, sx, sy):
+        """the push-in, done on the base frame (centre in base pixels), then ONE Lanczos downscale to 1080x1920"""
+        if z > 1.0005 or sx or sy:
+            cx_, cy_ = sx_ * (fcx + 0.5) - 0.5, sy_ * (fcy + 0.5) - 0.5
+            M = np.float32([[z, 0, cx_ * (1 - z) + sx_ * sx], [0, z, cy_ * (1 - z) + sy_ * sy]])
+            return down(cv2.warpAffine(f_, M, (BW, BH), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REFLECT))
+        return down(f_).copy()
     n = 0; cf = cut_frames(src); fr = {}; eof = None
 
     def fill(upto):                                           # frames n-2 .. n+2 stay in memory for the cut blends
         nonlocal eof
         while eof is None and max(fr, default=-1) < upto:
-            b_ = dec.stdout.read(W * H * 3)
-            if len(b_) < W * H * 3:
+            b_ = dec.stdout.read(BW * BH * 3)
+            if len(b_) < BW * BH * 3:
                 eof = max(fr, default=-1) + 1
             else:
-                fr[max(fr, default=-1) + 1] = np.frombuffer(b_, np.uint8).reshape(H, W, 3)
+                fr[max(fr, default=-1) + 1] = np.frombuffer(b_, np.uint8).reshape(BH, BW, 3)
 
     while True:
         fill(n + 2)
@@ -410,28 +435,19 @@ def main():
             break
         for k_ in [k_ for k_ in fr if k_ < n - 2]:
             del fr[k_]
-        buf = soft_cut(fr, n, cf).tobytes()
+        big = soft_cut(fr, n, cf)                             # base-size frame (4K in v2)
         t = n / FPS; c = in_cut(t); an = in_anim(t)
         if an:
             if layout == "full":                              # engine clip (RGBA): iris in from the face, zoom out into it
-                g = np.frombuffer(buf, np.uint8).reshape(H, W, 3); z, sx, sy = zoom(t)
-                if z > 1.0005 or sx or sy:
-                    g = cv2.warpAffine(g, np.float32([[z, 0, fcx * (1 - z) + sx], [0, z, fcy * (1 - z) + sy]]), (W, H), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REFLECT)
-                f = hybrid.over(g, an.frame(t))
+                f = hybrid.over(warp(big, *zoom(t)), an.frame(t))
             else:                                             # split: scene on top 60 %, the face below 40 %
                 f = np.empty((H, W, 3), np.uint8); f[:SPLIT_TOP] = hybrid.over(np.zeros((SPLIT_TOP, W, 3), np.uint8), an.frame(t))
-                f[SPLIT_TOP:] = face_panel(np.frombuffer(buf, np.uint8).reshape(H, W, 3), t - an.t0)
+                f[SPLIT_TOP:] = face_panel(np.ascontiguousarray(down(big)), t - an.t0)
                 f[SPLIT_TOP - 3:SPLIT_TOP + 3] = LEMON
         elif c:
             f = c.frame(t - c.t)
         else:
-            f = np.frombuffer(buf, np.uint8).reshape(H, W, 3)
-            z, sx, sy = zoom(t)
-            if z > 1.0005 or sx or sy:
-                M = np.float32([[z, 0, fcx * (1 - z) + sx], [0, z, fcy * (1 - z) + sy]])
-                f = cv2.warpAffine(f, M, (W, H), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REFLECT)
-            else:
-                f = f.copy()
+            f = warp(big, *zoom(t))
             for it in items:
                 a = t - it["t0"]
                 if a < 0 or t > it["t1"]:

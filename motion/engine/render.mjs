@@ -4,7 +4,7 @@
 //   node render.mjs <storyboard.json> --out out.mp4            full render (+ voice + subs.ass when the storyboard names them)
 //   node render.mjs <storyboard.json> --preview 1.5,4,9        PNG stills -> <dir>/preview/
 //   node render.mjs <storyboard.json> --out clip.mkv --alpha   transparent clip (ffv1 bgra), e.g. hybrid segments
-//   options: --workers 6  --report report.json  --crf 18  --html-only
+//   options: --workers 6  --report report.json  --crf 16  --html-only  --old-quality (the 1.0 encode: crf 8 parts, crf 18 medium, matrix left to ffmpeg)
 // Why chrome-headless-shell: a desktop browser's first launch on a fresh profile can hang forever in --screenshot mode and
 // it updates under us. The pinned headless shell has no first-run UI, starts in ~0.3 s from any shell and never hangs.
 import { spawn, spawnSync } from 'node:child_process';
@@ -230,6 +230,11 @@ if (prev) {
 
 const out = path.resolve(opt('--out', path.join(DIR, 'render.mp4')));
 const alpha = flag('--alpha');
+// quality v2: explicit BT.709 on the RGB -> YUV step and on the output (setparams: frame tags win over -color_* options),
+// lossless parts, final x264 slow CRF 16 / maxrate 20M; --old-quality or RS_QUALITY=v1 = the 1.0 encode exactly
+const Q1 = flag('--old-quality') || (process.env.RS_QUALITY || '').toLowerCase() === 'v1';
+const SETP = 'setparams=color_primaries=bt709:color_trc=bt709:colorspace=bt709:range=tv';
+const TAGS = ['-colorspace', 'bt709', '-color_primaries', 'bt709', '-color_trc', 'bt709', '-color_range', 'tv'];
 const nW = Math.max(1, Math.min(Number(opt('--workers', Math.max(2, Math.min(6, os.cpus().length / 2 - 1)))), Math.ceil(N / 30)));
 const parts = [];
 const ranges = Array.from({ length: nW }, (_, k) => [Math.floor(N * k / nW), Math.floor(N * (k + 1) / nW)]);
@@ -237,7 +242,9 @@ console.log(`render ${N} frames (${(t1 - t0).toFixed(2)} s) with ${nW} workers -
 let rendered = 0, EVENTS = [], SAMPLES = null;
 await Promise.all(ranges.map(async ([a, b], k) => {
   const part = path.join(BUILD, `part_${k}.mkv`); parts[k] = part;
-  const enc = alpha ? ['-c:v', 'ffv1', '-pix_fmt', 'bgra'] : ['-c:v', 'libx264', '-preset', 'veryfast', '-crf', '8', '-pix_fmt', 'yuv420p'];
+  const enc = alpha ? ['-c:v', 'ffv1', '-pix_fmt', 'bgra'] : Q1 ? ['-c:v', 'libx264', '-preset', 'veryfast', '-crf', '8', '-pix_fmt', 'yuv420p']
+    : ['-vf', `scale=out_color_matrix=bt709:out_range=tv:flags=accurate_rnd+full_chroma_int,format=yuv420p,${SETP}`,
+       '-c:v', 'libx264', '-preset', 'veryfast', '-qp', '0', '-pix_fmt', 'yuv420p', ...TAGS];
   const p = ff(['-f', 'image2pipe', '-framerate', String(FPS), '-c:v', 'png', '-i', '-', ...enc, part]);
   const fin = done(p);
   p.stdin.on('error', () => {});                              // ffmpeg's own exit code reports the failure
@@ -293,11 +300,15 @@ if (alpha) {
     if (r.status === 0) audio = mixed; else console.log('sfx failed; voice only');
   }
   if (audio) args.push('-i', audio);
-  const vf = SB.subs ? ['-vf', `ass='${path.relative(BUILD, rel(SB.subs)).replace(/\\/g, '/')}':fontsdir=fonts`] : [];
+  const assf = SB.subs ? `ass='${path.relative(BUILD, rel(SB.subs)).replace(/\\/g, '/')}':fontsdir=fonts` : '';
+  const vf = Q1 ? (assf ? ['-vf', assf] : []) : ['-vf', [assf, `scale=out_color_matrix=bt709:out_range=tv:flags=accurate_rnd,format=yuv420p,${SETP}`].filter(Boolean).join(',')];
   args.push(...vf, '-map', '0:v');
   if (audio) args.push('-map', '1:a', '-c:a', 'aac', '-b:a', '192k');
-  args.push('-t', (t1 - t0).toFixed(3), '-c:v', 'libx264', '-preset', 'medium', '-crf', opt('--crf', '18'), '-pix_fmt', 'yuv420p', '-r', String(FPS),
+  if (Q1) args.push('-t', (t1 - t0).toFixed(3), '-c:v', 'libx264', '-preset', 'medium', '-crf', opt('--crf', '18'), '-pix_fmt', 'yuv420p', '-r', String(FPS),
     '-color_primaries', 'bt709', '-color_trc', 'bt709', '-colorspace', 'bt709', '-movflags', '+faststart', '-metadata', 'comment=Reel Studio render', out);
+  else args.push('-t', (t1 - t0).toFixed(3), '-c:v', 'libx264', '-preset', 'slow', '-crf', opt('--crf', '16'), '-maxrate', '20M', '-bufsize', '40M',
+    '-profile:v', 'high', '-level:v', '4.2', '-g', '60', '-pix_fmt', 'yuv420p', '-r', String(FPS), ...TAGS,
+    '-movflags', '+faststart', '-metadata', 'comment=Reel Studio render', out);
   await done(ff(args, { cwd: BUILD }));
 }
 for (const p of parts) try { fs.unlinkSync(p); } catch {}

@@ -25,7 +25,7 @@ def main(argv):
     else:
         infos = {x["file"]: x for x in J["info"]}; ps = []
         for k, p in enumerate(cut["pieces"]):
-            ps.append(render.build_piece(job, k, p["file"], p["a"], p["b"], infos[p["file"]])[0])
+            ps.append(render.build_piece(job, k, p["file"], p["a"], p["b"], infos[p["file"]], "v1")[0])   # only the voice is used: 1080 pieces
         Path("_list.txt").write_text("".join(f"file 'pieces/{p.name}'\n" for p in ps), encoding="utf-8")
         r = C.ff("-f", "concat", "-safe", "0", "-i", "_list.txt", "-vn", "-c:a", "pcm_s16le", "_raw.wav")
         if r.returncode:
@@ -41,9 +41,10 @@ def main(argv):
     C.save_json("storyboard.json", S)
     fonts = C.sub_font(B["subs"])[1]
     ev = C.run_env(); ev["RS_SUB_FONTS"] = fonts
-    r = subprocess.run([C.node(), str(C.MOTION / "engine" / "render.mjs"), "storyboard.json", "--out", "final.mp4", "--report", "report.json"], env=ev)
+    r = subprocess.run([C.node(), str(C.MOTION / "engine" / "render.mjs"), "storyboard.json", "--out", "final.mp4", "--report", "report.json"] + (["--old-quality"] if C.quality(argv) == "v1" else []), env=ev)
     if r.returncode:
         C.fail("engine render failed")
+    C.save_json("render_info.json", {"quality": C.quality(argv), "hdr_clips": [], "hdr_engine": None})
     Path("gate.json").unlink(missing_ok=True)
     print(f"final.mp4: {C.duration('final.mp4'):.2f} s. next: reel-tool gate {job.name}")
 

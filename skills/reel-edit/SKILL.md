@@ -54,7 +54,7 @@ If it says all clips were edited before and the request does not say to redo the
 
 **9. Preview.** `reel-tool preview <job> <segment>` for each animation segment, Read `_motion/preview/sheet.jpg`. Fix overflows, tiny text, empty space, wrong timing before the long render.
 
-**10. Render.** `reel-tool render <job>`. It can take several minutes; for a Reel over 60 s run it (and the gate) in the background and wait for the notice. A browser that hangs is restarted automatically.
+**10. Render.** `reel-tool render <job>` (quality v2: 4K lossless pieces, BT.709, CRF 16; `--old-quality` = the smaller, faster 1.0 settings, only if the user asks or the disk is nearly full). It can take several minutes; for a Reel over 60 s run it (and the gate) in the background and wait for the notice. A browser that hangs is restarted automatically.
 
 **11. Look at it.** `reel-tool segsheet <job>`, Read `qf/segs.jpg` and `final_qc_sheet.jpg` after the gate has made it. Nothing on the face, nothing cut off, text readable, no empty slots, the animation actually says what the sentence says. Record: `reel-tool mark <job> visual "..."`.
 

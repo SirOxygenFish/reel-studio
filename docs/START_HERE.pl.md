@@ -35,6 +35,7 @@ Pracę wykonuje komputer, więc kiedy wysyłasz nagrania, musi być włączony, 
 2. **Dodaj SaveReel.** Ten skrót zapisuje gotową rolkę w Zdjęciach. Na stronie stuknij **Zainstaluj SaveReel**. Safari zapyta, czy otworzyć plik w Skrótach: stuknij Otwórz, potem przycisk dodawania na dole i Gotowe. Gdy pierwszy raz stukniesz **Do galerii**, iPhone zapyta o dostęp: zezwól na stałe (przycisk Always Allow na angielskim iPhonie). Jeśli to nie zadziała, zajrzyj do ostatniej części tej strony.
 3. **Dodaj stronę do ekranu początkowego.** Nadal w Safari stuknij Udostępnij, potem Do ekranu początkowego i Dodaj.
 4. **Obejrzyj film 2**: na stronie wysyłania stuknij **Jak to działa**. Film odtwarza się z Twojego komputera, w języku strony.
+5. **Instagram w najwyższej jakości.** W Instagramie otwórz profil, menu (trzy kreski), wpisz **jakość** w wyszukiwarce ustawień i włącz przesyłanie w najwyższej jakości (w angielskim Instagramie: Upload at highest quality), inaczej Instagram mocniej kompresuje rolki.
 
 ## 4. Opcjonalnie: poza domem
 

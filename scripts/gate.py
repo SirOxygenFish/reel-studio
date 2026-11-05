@@ -111,6 +111,11 @@ def main(argv):
     G.add("format", vs["width"] == 1080 and vs["height"] == 1920 and abs(fps - 30) < 0.1 and vs["pix_fmt"] == "yuv420p" and vs["codec_name"] == "h264" and aud is not None,
           f"{vs['width']}x{vs['height']} {fps:.2f} fps {vs['codec_name']} {vs['pix_fmt']} audio {aud and aud['codec_name']}, {dur:.2f} s",
           "re-render: the output must be 1080x1920 30 fps H.264 yuv420p with audio")
+    ri = C.load_json("render_info.json", {}) or {}
+    if ri.get("quality") == "v2":                          # quality v2 promises BT.709 matrix + tags, limited range
+        tg = [vs.get(k, "?") for k in ("color_space", "color_primaries", "color_transfer", "color_range")]
+        G.add("colour BT.709", tg == ["bt709", "bt709", "bt709", "tv"], "matrix/primaries/transfer/range " + "/".join(tg) +
+              (f", HDR tonemap {ri['hdr_engine']}" if ri.get("hdr_engine") else ""), "re-render with the current plugin: the file must be tagged BT.709")
 
     # QC: motion, dead stretches, coverage, safe zones, circles, variety
     args = [sys.executable, str(C.MOTION / "tools" / "qc.py"), "final.mp4"]

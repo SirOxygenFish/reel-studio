@@ -59,6 +59,7 @@ DEFAULT_CONFIG = {
     "ui_lang": "auto",                  # en | ru | pl for the phone link page and shortcuts; auto = system language
     "cache_keep": 5,                    # render caches of the newest N finished jobs stay
     "cache_days": 14,                   # ...and of any job delivered in the last N days
+    "quality": "v2",                    # v2 = 4K lossless intermediate, BT.709, CRF 16 final; v1 = the 1.0 path (smaller, faster)
 }
 
 # the house subtitle look: white heavy sans, black outline, active word lemon yellow
@@ -270,6 +271,60 @@ def run_env() -> dict:
 
 def ff(*a, **kw):
     return subprocess.run([FF, "-hide_banner", "-nostdin", "-y", *a], capture_output=True, text=True, encoding="utf-8", errors="replace", **kw)
+
+
+# ---------- video quality ----------
+# v2 (default since 1.1.0): explicit BT.709 on every RGB/YUV conversion and on the output, one lossless 4K intermediate
+# (2160x3840), the push-in done on the 4K frame and ONE Lanczos downscale to 1080x1920, final x264 slow CRF 16 / maxrate 20M.
+# v1 = the 1.0 path exactly (1080 pieces at CRF 12, CRF 20 final, matrix left to ffmpeg): --old-quality, RS_QUALITY=v1 or
+# reel-tool config quality v1.
+TAGS709 = ["-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709", "-color_range", "tv"]
+SETP709 = "setparams=color_primaries=bt709:color_trc=bt709:colorspace=bt709:range=tv"
+FINAL_X264 = ["-c:v", "libx264", "-preset", "slow", "-crf", "16", "-tune", "film", "-maxrate", "20M", "-bufsize", "40M",
+              "-profile:v", "high", "-level:v", "4.2", "-g", "60", "-pix_fmt", "yuv420p"] + TAGS709
+LOSSLESS_X264 = ["-c:v", "libx264", "-qp", "0", "-preset", "veryfast", "-pix_fmt", "yuv420p"] + TAGS709
+BSF709 = ["-bsf:v", "h264_metadata=colour_primaries=1:transfer_characteristics=1:matrix_coefficients=1:video_full_range_flag=0"]
+
+
+def quality(argv=()) -> str:
+    """'v2' or 'v1' (the old path); the flag wins, then RS_QUALITY, then the config"""
+    if "--old-quality" in argv:
+        return "v1"
+    q = os.environ.get("RS_QUALITY") or str(config().get("quality") or "v2")
+    return "v1" if q.strip().lower() == "v1" else "v2"
+
+
+def hdr_engine() -> str:
+    """'placebo' when this ffmpeg has libplacebo AND a Vulkan device really works (GPU tonemap), else 'zscale' (CPU).
+    Tested once per ffmpeg build; the answer is kept in <data>/env/hdr_engine.json. RS_HDR_ENGINE forces one (tests)."""
+    if os.environ.get("RS_HDR_ENGINE") in ("placebo", "zscale"):
+        return os.environ["RS_HDR_ENGINE"]
+    return hdr_engine_info()["engine"]
+
+
+def hdr_engine_info() -> dict:
+    try:
+        st = Path(FF).stat(); key = f"{FF}|{st.st_size}|{int(st.st_mtime)}"
+    except OSError:
+        key = FF
+    cache = ENVD / "hdr_engine.json"; c = load_json(cache, {}) or {}
+    if c.get("key") == key and c.get("engine") in ("placebo", "zscale"):
+        return c
+    eng, why = "zscale", "no libplacebo in this ffmpeg"
+    try:
+        fl = subprocess.run([FF, "-hide_banner", "-filters"], capture_output=True, text=True, timeout=30).stdout
+        if re.search(r"\blibplacebo\b", fl):
+            r = subprocess.run([FF, "-hide_banner", "-v", "error", "-init_hw_device", "vulkan", "-f", "lavfi", "-i", "testsrc2=s=320x240:d=0.2",
+                                "-vf", "libplacebo=w=160:h=120:format=yuv420p", "-f", "null", "-"], capture_output=True, text=True, timeout=60)
+            eng, why = ("placebo", "libplacebo on Vulkan") if r.returncode == 0 else ("zscale", "libplacebo present, no working Vulkan device")
+    except Exception as e:
+        why = f"test failed: {str(e)[:80]}"
+    c = {"key": key, "engine": eng, "why": why}
+    try:
+        save_json(cache, c)
+    except Exception:
+        pass
+    return c
 
 
 def probe(path) -> dict:

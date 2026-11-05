@@ -17,6 +17,13 @@ For people who only use their phone.
 - `reel-tool phone-link`: the link plus a QR code in the terminal and as a page
 - The page never shares a port with another program and says how to pick another one; a second start only prints the link
 
+### Video quality
+- Explicit BT.709 on every RGB/YUV conversion and on the output. Before, the sticker layer encoded with the BT.601 matrix and no tags (skin a little redder, up to 20 levels off on reds and greens) and the engine's files missed two of the colour tags
+- One lossless 4K intermediate (2160x3840): the push-in is done on the 4K frame, then one Lanczos downscale to 1080x1920
+- Final encode: x264 slow, CRF 16, maxrate 20M, faststart, BT.709 tags (Reels and the engine's faceless renders)
+- HDR clips (iPhone HLG / Dolby Vision, PQ) are tone-mapped once, at the start: libplacebo when the ffmpeg has it and a Vulkan device works, else zscale + tonemap on the CPU
+- More disk: about 1.3 GB of render cache per 30 s Reel (2.3 GB from HDR originals) plus the same again while rendering, and files roughly 2x bigger; `--old-quality` or `reel-tool config quality v1` gives the 1.0 settings back; doctor shows which HDR path this computer uses
+
 ### Engine
 - Storyboards without words (tutorials), explicit sound cues, a fixed sound reference when there is no voice
 - A plain `fade` transition and a still camera (`camera.still`) for screens with text to read

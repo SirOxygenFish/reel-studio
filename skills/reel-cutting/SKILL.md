@@ -50,5 +50,5 @@ Never a jump of scale on the face: the render does one slow eased push-in and pu
 ## Source rules
 
 - Horizontal or square footage is cropped to 9:16 around the face automatically; tell the user if a lot is lost.
-- HDR iPhone footage is tone-mapped automatically.
+- HDR iPhone footage is tone-mapped automatically, once, when the pieces are built (GPU libplacebo if available, else CPU zscale; `reel-tool doctor` says which).
 - Duplicate uploads: `scan` compares audio hashes, so a re-export of the same clip is recognised. Trust it over file names.

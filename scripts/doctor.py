@@ -77,7 +77,16 @@ def main(argv):
     gpu = shutil.which("nvidia-smi") and subprocess.run(["nvidia-smi", "--query-gpu=name,memory.total", "--format=csv,noheader"], capture_output=True, text=True).stdout.strip()
     print("note  GPU:", gpu or "none: speech runs on the CPU, a 1 minute Reel takes about 5-10 minutes longer")
     usage = shutil.disk_usage(C.DATA if C.DATA.exists() else Path.home())
-    row("disk space", usage.free > 3 * 1024 ** 3, f"{usage.free / 1024 ** 3:.0f} GB free", "free some space: a job needs about 2 GB")
+    row("disk space", usage.free > 6 * 1024 ** 3, f"{usage.free / 1024 ** 3:.0f} GB free", "free some space: a job needs about 3-5 GB while it renders (reel-tool clean --all frees the render caches)")
+    q = C.quality()
+    if q == "v2":
+        he = C.hdr_engine_info()
+        print("note  video quality v2: 4K lossless intermediate, BT.709, CRF 16 (about 1.3 GB of render cache per 30 s Reel, 2.3 GB from HDR"
+              " originals, removed by the cache cleaner; finished Reels about 2x bigger than 1.0). HDR clips: " +
+              ("GPU tonemap (libplacebo on Vulkan)" if he["engine"] == "placebo" else f"CPU tonemap (zscale; {he['why']})") +
+              ". Old settings: --old-quality or reel-tool config quality v1")
+    else:
+        print("note  video quality v1 (the 1.0 settings: 1080 pieces, CRF 20). reel-tool config quality v2 for the 4K path")
     print("brands:", ", ".join(C.brand_list()) or "none (the neutral default look is used; /reel-brand makes one)")
     print("folders:", {k: str(v) for k, v in C.folders().items()})
     try:                                                         # the phone side: informational, never a failure

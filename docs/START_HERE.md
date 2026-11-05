@@ -33,6 +33,7 @@ The computer does the work, so it has to be switched on with the Claude app open
 2. **Add SaveReel.** It saves a finished Reel into Photos. On the page, tap **Install SaveReel**. Safari asks to open it in Shortcuts: tap **Open**, then **Add Shortcut**, then **Done**. The first time you tap **To gallery**, iPhone asks for access: tap **Always Allow**. If it does not work, see the last section of this page.
 3. **Put the page on the Home Screen.** Still in Safari, tap **Share**, then **Add to Home Screen**, then **Add**.
 4. **Watch Tutorial 2**: on the upload page, tap **How to**. It plays from your computer, in the page's language.
+5. **Instagram at full quality.** In Instagram open your profile, the menu (three lines), type **quality** in the settings search and turn on **Upload at highest quality**; otherwise Instagram compresses your Reels more.
 
 ## 4. Optional: away from home
 

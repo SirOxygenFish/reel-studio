@@ -151,7 +151,7 @@ Keep it running without a session (user level, no administrator rights):
 
 ## Configuration
 
-`reel-tool config` shows the settings; `reel-tool config output_folder "D:/Reels"` changes one. Keys: `default_format` (hybrid, face, faceless), `default_brand`, `input_folder`, `output_folder`, `work_folder`, `language`, `whisper_model`, `cache_days`, `cache_keep`. A `reel-studio.json` in a project overrides them for that project. Subtitle style lives in the brand profile.
+`reel-tool config` shows the settings; `reel-tool config output_folder "D:/Reels"` changes one. Keys: `default_format` (hybrid, face, faceless), `default_brand`, `input_folder`, `output_folder`, `work_folder`, `language`, `whisper_model`, `cache_days`, `cache_keep`, `quality` (`v2` default, `v1` = the 1.0 settings). A `reel-studio.json` in a project overrides them for that project. Subtitle style lives in the brand profile.
 
 Your data (brands, the variety ledger, your bespoke scenes, the list of clips already edited) and the installed tools live in the plugin's data folder (`~/.claude/plugins/data/reel-studio-siroxygenfish`) and survive updates. Uninstalling removes it unless you use `claude plugin uninstall --keep-data`.
 
@@ -160,6 +160,7 @@ Your data (brands, the variety ledger, your bespoke scenes, the list of clips al
 - Your original files are never changed or deleted. A new version of a Reel moves the older one to `reels-done/_old/`.
 - Each Reel takes about 15-40 minutes of Claude's work, because the animations are designed for your script. On a Pro plan, a long Reel can use a good part of a usage window.
 - Render caches (often 1-2 GB a job) are removed automatically for jobs delivered more than 14 days ago; the newest 5 keep theirs.
+- Video quality: every Reel is built from one lossless 4K intermediate with BT.709 colour throughout (HDR iPhone clips are tone-mapped once, on the GPU when ffmpeg can, else on the CPU) and encoded at x264 slow CRF 16. That needs more disk: about 1.3 GB of render cache per 30 s Reel (about 2.3 GB from HDR iPhone originals), plus the same again for a moment while it renders; the cache cleaner removes it like the other caches. The finished files are roughly 2x bigger than in 1.0. `reel-tool render <job> --old-quality` (or `reel-tool config quality v1`) gives the 1.0 settings back. In Instagram, turn on **Upload at highest quality** (settings search: quality).
 
 ## Licence
 
