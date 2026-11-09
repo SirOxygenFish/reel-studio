@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.0 (2026-11-09)
+
+Finished videos on the phone page: watch them inline in full quality as poster cards, with a "New" badge until first played; the delete button moves a video to `_deleted` in the output folder with Undo and "Recently deleted" to restore it, and after 30 days it goes to the Recycle Bin / Trash (never a permanent delete). Delete, restore and played are POST only, from the page itself. English, Russian and Polish.
+
 ## 1.2.0 (2026-11-05)
 
 Setup that shows every click, in one chat from start to finish.

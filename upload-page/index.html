@@ -9,13 +9,15 @@
   :root {
     --bg: #f6f4ef; --card: #ffffff; --text: #1d1d1b; --muted: #6b6860; --line: #e3dfd6;
     --accent: #1f6feb; --accent-text: #ffffff; --ok: #1a7f37; --ok-bg: #e6f4ea; --err: #c62828; --err-bg: #fdecea;
-    --bar-bg: #e9e6df;
+    --bar-bg: #e9e6df; --danger: #c62828; --danger-text: #ffffff; --shade: rgba(0,0,0,.45);
+    --toast-bg: #1d1d1b; --toast-text: #f6f4ef;
   }
   @media (prefers-color-scheme: dark) {
     :root {
       --bg: #161614; --card: #22221f; --text: #f1efe9; --muted: #a8a49a; --line: #3a3934;
       --accent: #4c8dff; --accent-text: #0b0b0a; --ok: #5cc87a; --ok-bg: #1d3324; --err: #ff7b72; --err-bg: #3a1f1d;
-      --bar-bg: #34332e;
+      --bar-bg: #34332e; --danger: #e0443e; --danger-text: #ffffff; --shade: rgba(0,0,0,.6);
+      --toast-bg: #f1efe9; --toast-text: #161614;
     }
   }
   * { box-sizing: border-box; }
@@ -53,12 +55,8 @@
           font-size: 24px; font-weight: 800; margin-top: 16px; }
   .partial { background: var(--err-bg); color: var(--err); border-radius: 16px; padding: 18px 16px; text-align: center;
              font-size: 19px; font-weight: 700; margin-top: 16px; }
-  .ready { display: flex; gap: 12px; align-items: center; padding: 14px 0; border-top: 1px solid var(--line); }
-  .ready:first-child { border-top: 0; }
-  .ready .info { flex: 1; min-width: 0; }
   .dl { flex: none; text-decoration: none; background: var(--accent); color: var(--accent-text); font-weight: 700;
-        border-radius: 12px; padding: 12px 16px; font-size: 17px; }
-  .ready .acts { flex: none; display: flex; flex-direction: column; gap: 8px; align-items: stretch; }
+        border-radius: 12px; padding: 12px 16px; font-size: 17px; border: 0; font-family: inherit; cursor: pointer; }
   .dl.second { background: transparent; color: var(--accent); border: 2px solid var(--accent); padding: 8px 12px; font-size: 15px;
                font-family: inherit; cursor: pointer; text-align: center; }
   #install .hint { color: var(--muted); font-size: 16px; margin: 10px 0 0; }
@@ -73,6 +71,68 @@
   #howtoBox video { width: auto; max-width: 100%; max-height: calc(100vh - 110px); border-radius: 14px; background: #000; }
   #howtoBox .big { max-width: 360px; margin-top: 14px; padding: 16px; }
   [hidden] { display: none !important; }
+
+  /* finished videos: poster cards, two per row; the playing one spans the row */
+  .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 12px; }
+  .rc { position: relative; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .rc.open { grid-column: 1 / -1; }
+  .media { position: relative; border-radius: 14px; overflow: hidden; background: var(--bar-bg); aspect-ratio: 9 / 16; }
+  .rc.open .media { aspect-ratio: auto; background: #000; }
+  .poster { display: block; width: 100%; height: 100%; padding: 0; border: 0; margin: 0; background: none;
+            cursor: pointer; color: #fff; font: inherit; }
+  .poster img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .rc.image .poster img { object-fit: contain; }
+  .play { position: absolute; left: 50%; top: 50%; width: 64px; height: 64px; margin: -32px 0 0 -32px; border-radius: 50%;
+          background: var(--shade); display: grid; place-items: center; }
+  .play svg { width: 26px; height: 26px; margin-left: 4px; fill: #fff; }
+  .badge { position: absolute; left: 8px; top: 8px; background: var(--accent); color: var(--accent-text);
+           font-size: 14px; font-weight: 800; border-radius: 8px; padding: 3px 8px; }
+  .dur { position: absolute; right: 8px; bottom: 8px; background: var(--shade); color: #fff; font-size: 14px;
+         font-weight: 700; border-radius: 7px; padding: 2px 7px; font-variant-numeric: tabular-nums; }
+  .x { position: absolute; right: 0; top: 0; width: 52px; height: 52px; padding: 0; border: 0; background: none;
+       cursor: pointer; display: grid; place-items: center; z-index: 2; }
+  .x span { width: 36px; height: 36px; border-radius: 50%; background: var(--shade); display: grid; place-items: center; }
+  .x svg { width: 16px; height: 16px; stroke: #fff; stroke-width: 2.6; stroke-linecap: round; }
+  .media video, .media > .full { display: block; width: 100%; max-height: 78vh; background: #000; }
+  .media > .full { object-fit: contain; }
+  .vmsg { padding: 40px 16px; color: #fff; text-align: center; }
+  .rc .fname { font-size: 17px; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .rc.open .fname { -webkit-line-clamp: unset; }
+  .rc .fmeta { font-size: 15px; }
+  .rc .acts { margin-top: auto; display: flex; flex-direction: column; gap: 8px; }
+  .rc .dl { display: block; text-align: center; padding: 14px 8px; }
+  .rc .dl.second { padding: 10px 8px; }
+  .rc .fold { display: none; }
+  .rc.open .acts { flex-direction: row; gap: 10px; }
+  .rc.open .acts .dl { flex: 1; }
+  .rc.open .fold { display: block; background: transparent; color: var(--accent); border: 2px solid var(--accent); padding: 12px 8px; }
+
+  /* recently deleted */
+  #trashBox summary { cursor: pointer; font-size: 20px; font-weight: 700; padding: 4px 0; list-style-position: inside; }
+  .thint { color: var(--muted); font-size: 15px; margin: 6px 0 4px; }
+  .trow { display: flex; gap: 12px; align-items: center; padding: 14px 0; border-top: 1px solid var(--line); }
+  .trow .info { flex: 1; min-width: 0; }
+
+  /* bottom sheet + toast */
+  .sheet-wrap { position: fixed; inset: 0; z-index: 20; }
+  .sheet-bg { position: absolute; inset: 0; background: rgba(0,0,0,.5); opacity: 0; transition: opacity .2s; }
+  .sheet { position: absolute; left: 0; right: 0; bottom: 0; max-width: 560px; margin: 0 auto; background: var(--card);
+           border-radius: 22px 22px 0 0; padding: 10px 18px calc(22px + env(safe-area-inset-bottom)); transform: translateY(100%);
+           transition: transform .22s ease-out; box-shadow: 0 -6px 30px rgba(0,0,0,.25); }
+  .sheet-wrap.on .sheet { transform: none; }
+  .sheet-wrap.on .sheet-bg { opacity: 1; }
+  .grab { width: 44px; height: 5px; border-radius: 3px; background: var(--line); margin: 0 auto 14px; }
+  .sheet h3 { font-size: 22px; margin: 0 0 6px; overflow-wrap: anywhere; }
+  .sheet p { color: var(--muted); font-size: 16px; margin: 0 0 18px; }
+  .danger { background: var(--danger); color: var(--danger-text); }
+  .toast { position: fixed; left: 12px; right: 12px; bottom: calc(16px + env(safe-area-inset-bottom)); z-index: 30; max-width: 536px;
+           margin: 0 auto; background: var(--toast-bg); color: var(--toast-text); border-radius: 16px; padding: 8px 8px 8px 18px;
+           display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 600; box-shadow: 0 6px 24px rgba(0,0,0,.3); overflow: hidden; }
+  .toast .tmsg { flex: 1; min-width: 0; padding: 10px 0; }
+  .toast button { border: 0; border-radius: 12px; background: var(--accent); color: var(--accent-text); font: inherit;
+                  font-weight: 800; padding: 12px 18px; cursor: pointer; }
+  .toast .tbar { position: absolute; left: 0; bottom: 0; height: 3px; background: var(--accent); }
+  @media (prefers-reduced-motion: reduce) { .sheet, .sheet-bg { transition: none; } }
 </style>
 </head>
 <body>
@@ -120,9 +180,30 @@
     <details class="manual" id="manual" hidden><summary data-t="manualTitle">No SaveReel? Save by hand</summary><ol id="manualSteps"></ol></details>
   </section>
 
+  <section class="card" id="trash" hidden>
+    <details id="trashBox">
+      <summary id="trashSum">Recently deleted</summary>
+      <div class="thint" id="trashHint"></div>
+      <div id="trashList"></div>
+    </details>
+  </section>
+
   <div class="langs" id="reinstall" hidden><button data-t="install">Install SaveReel</button></div>
   <div class="langs" id="langs"><button data-l="en">English</button>·<button data-l="ru">Русский</button>·<button data-l="pl">Polski</button></div>
 </main>
+
+<div class="sheet-wrap" id="sheet" hidden>
+  <div class="sheet-bg" id="sheetBg"></div>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <div class="grab"></div>
+    <h3 id="sheetTitle"></h3>
+    <p id="sheetSub"></p>
+    <button class="big danger" id="sheetDel" data-t="del">Delete</button>
+    <div class="gap"></div>
+    <button class="big second" id="sheetCancel" data-t="cancel">Cancel</button>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden><span class="tmsg" id="toastMsg"></span><button id="toastBtn" hidden></button><div class="tbar" id="toastBar"></div></div>
 
 <div id="howtoBox" hidden>
   <video id="howtoVideo" controls playsinline preload="none"></video>
@@ -146,7 +227,14 @@ const T = {
         done: 'Done, uploaded', partial: 'Some files did not upload', retry: 'Try again', again: 'Send more', finished: 'Finished videos',
         nothing: 'Nothing yet', loadFail: 'Could not load the list', gallery: 'To gallery', download: 'Download', skipped: 'Skipped',
         waiting: 'Waiting', sending: 'Uploading', uploaded: 'Uploaded', failed: 'Failed', lost: 'connection lost', of: 'of',
-        noAnswer: 'The computer is not answering', close: 'Close', space: 'not enough space on the computer', types: 'only video and photos' },
+        noAnswer: 'The computer is not answering', close: 'Close', space: 'not enough space on the computer', types: 'only video and photos',
+        watch: 'Watch', open: 'Open', newBadge: 'New', photo: 'Photo', fold: 'Collapse', videoFail: 'The video did not open. Try again.',
+        del: 'Delete', cancel: 'Cancel', delAsk: 'Delete "{t}"?', delSub: 'You can bring it back from Recently deleted for {n} days.',
+        deleted: 'Deleted', undo: 'Undo', restored: 'Restored', delFail: 'Not deleted', restoreFail: 'Not restored',
+        trashTitle: 'Recently deleted', trashHint: 'After {n} days videos go to the computer’s Recycle Bin / Trash.',
+        trashRow: 'Deleted {a} · to the Trash on {b}', restore: 'Restore', notDone: 'something went wrong',
+        busyFile: 'the video is open on the computer, try again', notFound: 'video not found', gone: 'no longer in Recently deleted',
+        notPage: 'request not from this page', cantDel: 'could not delete', cantRestore: 'could not restore' },
   ru: { installTitle: 'Один раз: добавьте SaveReel', installText: 'Она сохраняет готовые видео в «Фото».', install: 'Установить SaveReel',
         installHint: 'Safari предложит открыть файл в «Быстрых командах»: нажмите «Открыть», затем кнопку добавления.',
         installDone: 'Готово, добавлено', savePhotos: 'Сохранить в «Фото»', preparing: 'Готовлю…', tapAgain: 'Готово, нажмите ещё раз',
@@ -157,7 +245,14 @@ const T = {
         done: 'Готово, загружено', partial: 'Часть файлов не загрузилась', retry: 'Попробовать снова', again: 'Отправить ещё', finished: 'Готовые видео',
         nothing: 'Пока ничего нет', loadFail: 'Не удалось загрузить список', gallery: 'В галерею', download: 'Скачать', skipped: 'Пропущено',
         waiting: 'Ждёт', sending: 'Загружается', uploaded: 'Загружено', failed: 'Ошибка', lost: 'связь прервалась', of: 'из',
-        noAnswer: 'Компьютер не отвечает', close: 'Закрыть', space: 'на компьютере не хватает места', types: 'только видео и фото' },
+        noAnswer: 'Компьютер не отвечает', close: 'Закрыть', space: 'на компьютере не хватает места', types: 'только видео и фото',
+        watch: 'Смотреть', open: 'Открыть', newBadge: 'Новое', photo: 'Фото', fold: 'Свернуть', videoFail: 'Видео не открылось. Попробуйте ещё раз.',
+        del: 'Удалить', cancel: 'Отмена', delAsk: 'Удалить «{t}»?', delSub: 'Можно будет вернуть в «Недавно удалённых» в течение {n} дней.',
+        deleted: 'Удалено', undo: 'Вернуть', restored: 'Возвращено', delFail: 'Не удалилось', restoreFail: 'Не вернулось',
+        trashTitle: 'Недавно удалённые', trashHint: 'Через {n} дней видео уходят в Корзину компьютера.',
+        trashRow: 'Удалено {a} · в Корзину {b}', restore: 'Вернуть', notDone: 'не получилось',
+        busyFile: 'видео сейчас открыто на компьютере, попробуйте ещё раз', notFound: 'видео не найдено', gone: 'уже нет в удалённых',
+        notPage: 'запрос не с этой страницы', cantDel: 'не получилось удалить', cantRestore: 'не получилось вернуть' },
   pl: { installTitle: 'Jednorazowo: dodaj SaveReel', installText: 'Zapisuje gotowe filmy w Zdjęciach.', install: 'Zainstaluj SaveReel',
         installHint: 'Safari zapyta, czy otworzyć plik w Skrótach: stuknij Otwórz, potem przycisk dodawania.',
         installDone: 'Gotowe, dodane', savePhotos: 'Zapisz w Zdjęciach', preparing: 'Przygotowuję…', tapAgain: 'Gotowe, stuknij jeszcze raz',
@@ -168,9 +263,19 @@ const T = {
         done: 'Gotowe, wysłane', partial: 'Część plików się nie wysłała', retry: 'Spróbuj ponownie', again: 'Wyślij więcej', finished: 'Gotowe filmy',
         nothing: 'Na razie nic', loadFail: 'Nie udało się wczytać listy', gallery: 'Do galerii', download: 'Pobierz', skipped: 'Pominięto',
         waiting: 'Czeka', sending: 'Wysyłanie', uploaded: 'Wysłano', failed: 'Błąd', lost: 'połączenie przerwane', of: 'z',
-        noAnswer: 'Komputer nie odpowiada', close: 'Zamknij', space: 'na komputerze brakuje miejsca', types: 'tylko filmy i zdjęcia' },
+        noAnswer: 'Komputer nie odpowiada', close: 'Zamknij', space: 'na komputerze brakuje miejsca', types: 'tylko filmy i zdjęcia',
+        watch: 'Obejrzyj', open: 'Otwórz', newBadge: 'Nowe', photo: 'Zdjęcie', fold: 'Zwiń', videoFail: 'Film się nie otworzył. Spróbuj ponownie.',
+        del: 'Usuń', cancel: 'Anuluj', delAsk: 'Usunąć „{t}”?', delSub: 'Możesz go przywrócić z „Ostatnio usuniętych” przez {n} dni.',
+        deleted: 'Usunięto', undo: 'Cofnij', restored: 'Przywrócono', delFail: 'Nie usunięto', restoreFail: 'Nie przywrócono',
+        trashTitle: 'Ostatnio usunięte', trashHint: 'Po {n} dniach filmy trafiają do Kosza komputera.',
+        trashRow: 'Usunięto {a} · do Kosza {b}', restore: 'Przywróć', notDone: 'coś poszło nie tak',
+        busyFile: 'film jest teraz otwarty na komputerze, spróbuj ponownie', notFound: 'nie znaleziono filmu', gone: 'już nie ma go w usuniętych',
+        notPage: 'żądanie nie z tej strony', cantDel: 'nie udało się usunąć', cantRestore: 'nie udało się przywrócić' },
 };
-const SERVER_ERR = { 'not enough space on the computer': 'space', 'only video and photos': 'types' };
+const SERVER_ERR = { 'not enough space on the computer': 'space', 'only video and photos': 'types',
+  'the video is open on the computer, try again': 'busyFile', 'video not found': 'notFound', 'no longer in recently deleted': 'gone',
+  'request not from this page': 'notPage', 'could not delete': 'cantDel', 'could not restore': 'cantRestore' };
+const fill = (s, v) => s.replace(/\{(\w)\}/g, (_, k) => v[k] ?? '');
 function pickLang() {
   try { const s = localStorage.getItem('lang'); if (T[s]) return s; } catch {}
   for (const l of navigator.languages || [navigator.language || 'en']) { const k = String(l).slice(0, 2).toLowerCase(); if (T[k]) return k; }
@@ -185,6 +290,7 @@ function applyLang(l) {
   document.querySelectorAll('#langs button').forEach(b => b.classList.toggle('on', b.dataset.l === l));
   $('installBtn').href = shortcutFile();
   $('manualSteps').innerHTML = t.manual.map(x => `<li>${esc(x)}</li>`).join('');
+  resetCards();
   loadReady();
 }
 document.querySelectorAll('#langs button').forEach(b => b.addEventListener('click', () => {
@@ -339,29 +445,232 @@ async function shareVideo(btn, f) {
   }
 }
 
-async function loadReady() {
+// ---------- finished videos: poster cards, inline full-quality player, "New" until first played, delete with undo ----------
+const ICON_PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5v17a1 1 0 0 0 1.5.86l14-8.5a1 1 0 0 0 0-1.72l-14-8.5A1 1 0 0 0 6 3.5z"/></svg>';
+const ICON_X = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13"/></svg>';
+const when = s => new Date(s * 1000).toLocaleString(LANG, { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
+const day = s => new Date(s * 1000).toLocaleDateString(LANG, { day: 'numeric', month: 'long' });
+const mmss = s => { s = Math.round(s); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+const withKey = u => u + (u.includes('?') ? '&' : '?') + 'k=' + encodeURIComponent(KEY);
+const serverMsg = m => t[SERVER_ERR[m]] || m || t.notDone;
+const post = (url, data) => fetch(withKey(url), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
+  .then(async r => { let j = {}; try { j = await r.json(); } catch {} if (!r.ok) throw new Error(serverMsg(j.error)); return j; });
+
+let files = [], deleted = [], keepDays = 30, sheetFor = null, sheetReturn = null;
+const cards = new Map();                                   // id -> { el, sig }
+
+function makeCard(f) {
+  const el = document.createElement('article');
+  el.className = 'rc ready' + (f.kind === 'image' ? ' image' : '');
+  el.dataset.id = f.id;
+  const look = f.kind === 'video' ? t.watch : t.open;
+  el.innerHTML = `
+    <div class="media">
+      <button class="poster" type="button" aria-label="${esc(look)}: ${esc(f.title)}">
+        ${f.poster ? `<img src="${withKey(f.poster)}" alt="" loading="lazy" decoding="async">` : ''}
+        ${f.kind === 'video' ? `<span class="play">${ICON_PLAY}</span>` : ''}
+        <span class="badge" hidden>${esc(t.newBadge)}</span>
+        ${f.kind === 'video' && f.dur ? `<span class="dur">${mmss(f.dur)}</span>` : f.kind === 'image' ? `<span class="dur">${esc(t.photo)}</span>` : ''}
+      </button>
+      <button class="x" type="button" aria-label="${esc(t.del)}: ${esc(f.title)}"><span>${ICON_X}</span></button>
+    </div>
+    <div>
+      <div class="fname">${esc(f.title)}</div>
+      <div class="fmeta">${[f.kind === 'video' && f.dur ? mmss(f.dur) : '', when(f.mtime), size(f.size)].filter(Boolean).join(' · ')}</div>
+    </div>
+    <div class="acts">
+      ${isIOS ? `<a class="dl" href="${galleryLink(f)}">${t.gallery}</a>${canShare
+                  ? `<button class="dl second" type="button" data-share="1">${t.savePhotos}</button>`
+                  : `<a class="dl second" href="${fileURL(f)}" download>${t.download}</a>`}`
+              : `<a class="dl" href="${fileURL(f)}" download>${t.download}</a>`}
+      <button class="dl fold" type="button">${esc(t.fold)}</button>
+    </div>`;
+  el.querySelector('.poster').addEventListener('click', () => openCard(el));
+  el.querySelector('.x').addEventListener('click', e => askDelete(el, e.currentTarget));
+  el.querySelector('.fold').addEventListener('click', () => closeCard(el));
+  const sb = el.querySelector('[data-share]');
+  if (sb) sb.addEventListener('click', () => { const x = fileOf(el); if (x) shareVideo(sb, x); });
+  return el;
+}
+const fileOf = el => files.find(f => f.id === el.dataset.id);
+
+function closeCard(el) {
+  const v = el.querySelector('video');
+  if (v) { v.pause(); v.removeAttribute('src'); v.load(); }      // stops the download too
+  const full = el.querySelector('.media > .full, .media > .vmsg');
+  if (full) full.remove();
+  el.querySelector('.poster').hidden = false;
+  el.classList.remove('open');
+}
+
+function openCard(el) {
+  const f = fileOf(el);
+  if (!f) return;
+  document.querySelectorAll('.rc.open').forEach(o => o !== el && closeCard(o));
+  const media = el.querySelector('.media'), src = withKey(`/stream/${f.id}${f.ext}`);   // the original file, full quality
+  let m;
+  if (f.kind === 'video') {
+    m = document.createElement('video');
+    m.controls = true; m.playsInline = true; m.setAttribute('playsinline', ''); m.preload = 'metadata';
+    if (f.poster) m.poster = withKey(f.poster);
+    m.src = src;
+    m.addEventListener('play', () => markPlayed(f, el), { once: true });
+    m.addEventListener('error', () => {
+      if (!el.contains(m) || !m.getAttribute('src')) return;
+      const msg = document.createElement('div'); msg.className = 'vmsg'; msg.textContent = t.videoFail;
+      m.replaceWith(msg);
+    });
+  } else {
+    m = document.createElement('img'); m.alt = f.title; m.src = src;
+  }
+  m.classList.add('full');
+  el.querySelector('.poster').hidden = true;
+  media.appendChild(m);
+  el.classList.add('open');
+  if (f.kind === 'video') m.play().catch(() => {});        // tap = user gesture, so sound is allowed
+  requestAnimationFrame(() => el.scrollIntoView({ block: 'nearest', behavior: 'smooth' }));
+}
+
+function markPlayed(f, el) {
+  if (!f.new) return;
+  f.new = false;
+  el.querySelector('.badge').hidden = true;
+  post('/api/played', { id: f.id }).catch(() => {});
+}
+
+function resetCards() {                                    // labels are baked into the cards: a new language rebuilds them
+  cards.forEach(c => { closeCard(c.el); c.el.remove(); }); cards.clear();
+}
+
+function renderReady() {
   const box = $('readyList');
+  if (!files.length) {
+    resetCards();
+    box.className = 'empty'; box.textContent = t.nothing; return;
+  }
+  if (box.className !== 'grid') { box.textContent = ''; box.className = 'grid'; }
+  const seen = new Set();
+  files.forEach((f, i) => {
+    const sig = [f.name, f.mtime, f.poster, f.dur].join('|');
+    let c = cards.get(f.id);
+    if (c && c.sig !== sig && !c.el.classList.contains('open')) { c.el.remove(); c = null; }
+    if (!c) { c = { el: makeCard(f) }; cards.set(f.id, c); }
+    c.sig = sig;
+    c.el.querySelector('.badge').hidden = !f.new;
+    const at = box.children[i];
+    if (at !== c.el) box.insertBefore(c.el, at || null);   // only moves cards whose place changed
+    seen.add(f.id);
+  });
+  for (const [id, c] of cards) if (!seen.has(id)) { closeCard(c.el); c.el.remove(); cards.delete(id); }
+}
+
+function renderTrash() {
+  $('trash').hidden = !deleted.length;
+  $('trashSum').textContent = `${t.trashTitle} (${deleted.length})`;
+  $('trashHint').textContent = fill(t.trashHint, { n: keepDays });
+  $('trashList').innerHTML = deleted.map(d => `
+    <div class="trow">
+      <div class="info">
+        <div class="fname">${esc(d.title)}</div>
+        <div class="fmeta">${esc(fill(t.trashRow, { a: when(d.deleted_at), b: day(d.purge_at) }))}</div>
+      </div>
+      <button class="dl" type="button" data-token="${esc(d.token)}">${esc(t.restore)}</button>
+    </div>`).join('');
+}
+$('trashList').addEventListener('click', e => {
+  const b = e.target.closest('button[data-token]');
+  if (b) { b.disabled = true; restore(b.dataset.token); }
+});
+
+let loading = null;
+function loadReady() {
+  if (loading) return loading;
+  loading = (async () => {
+    try {
+      const r = await fetch(withKey('/api/ready'), { cache: 'no-store' });
+      if (!r.ok) throw new Error();
+      const j = await r.json();
+      files = j.files; deleted = j.deleted || []; keepDays = j.keep_days || 30;
+      renderReady(); renderTrash();
+      if (files.some(f => f.kind === 'video' && !f.poster)) setTimeout(loadReady, 8000);   // posters still being made
+    } catch {
+      if (!files.length) { const box = $('readyList'); box.className = 'empty'; box.textContent = t.loadFail; }
+    } finally { loading = null; }
+  })();
+  return loading;
+}
+
+// ---- delete: bottom sheet, then a toast with Undo; the file is only moved to _deleted on the computer ----
+function askDelete(el, from) {
+  const f = fileOf(el);
+  if (!f) return;
+  sheetFor = f; sheetReturn = from;
+  $('sheetTitle').textContent = fill(t.delAsk, { t: f.title });
+  $('sheetSub').textContent = fill(t.delSub, { n: keepDays });
+  $('sheetDel').disabled = false;
+  $('sheet').hidden = false;
+  document.body.style.overflow = 'hidden';
+  requestAnimationFrame(() => requestAnimationFrame(() => $('sheet').classList.add('on')));
+  $('sheetCancel').focus({ preventScroll: true });
+}
+function closeSheet() {
+  if ($('sheet').hidden) return;
+  $('sheet').classList.remove('on');
+  document.body.style.overflow = '';
+  setTimeout(() => { $('sheet').hidden = true; }, 230);
+  if (sheetReturn && document.contains(sheetReturn)) sheetReturn.focus({ preventScroll: true });
+  sheetFor = null;
+}
+$('sheetCancel').addEventListener('click', closeSheet);
+$('sheetBg').addEventListener('click', closeSheet);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheet(); });
+
+$('sheetDel').addEventListener('click', async () => {
+  const f = sheetFor;
+  if (!f) return;
+  $('sheetDel').disabled = true;
+  const c = cards.get(f.id);
+  if (c) closeCard(c.el);                                   // let go of the file before it moves
   try {
-    const r = await fetch('/api/ready?k=' + KEY, { cache: 'no-store' });
-    const files = (await r.json()).files;
-    if (!files.length) { box.className = 'empty'; box.textContent = t.nothing; return; }
-    box.className = '';
-    box.innerHTML = files.map(f => `
-      <div class="ready">
-        <div class="info">
-          <div class="fname">${esc(f.title)}</div>
-          <div class="fmeta">${new Date(f.mtime * 1000).toLocaleString(LANG, { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })} · ${size(f.size)}</div>
-        </div>
-        ${isIOS ? `<div class="acts"><a class="dl" href="${galleryLink(f)}">${t.gallery}</a>${canShare
-                    ? `<button class="dl second" data-share="${esc(f.name)}">${t.savePhotos}</button>`
-                    : `<a class="dl second" href="${fileURL(f)}" download>${t.download}</a>`}</div>`
-                : `<a class="dl" href="${fileURL(f)}" download>${t.download}</a>`}
-      </div>`).join('');
-    box.querySelectorAll('[data-share]').forEach(b => b.addEventListener('click', () => shareVideo(b, files.find(x => x.name === b.dataset.share))));
-  } catch {
-    box.className = 'empty'; box.textContent = t.loadFail;
+    const res = await post('/api/delete', { id: f.id });
+    sheetReturn = null; closeSheet();
+    if (c) { c.el.remove(); cards.delete(f.id); }
+    files = files.filter(x => x.id !== f.id);
+    if (!files.length) renderReady();
+    showToast(t.deleted, t.undo, () => restore(res.token));
+    loadReady();
+  } catch (err) {
+    closeSheet();
+    showToast(t.delFail + ': ' + err.message);
+  }
+});
+
+async function restore(token) {
+  hideToast();
+  try {
+    await post('/api/restore', { token });
+    await loadReady();
+    showToast(t.restored, null, null, 3000);
+  } catch (err) {
+    showToast(t.restoreFail + ': ' + err.message);
+    loadReady();
   }
 }
+
+let toastTimer = null;
+function showToast(text, label, action, ms = 8000) {
+  clearTimeout(toastTimer);
+  $('toastMsg').textContent = text;
+  const b = $('toastBtn'), bar = $('toastBar');
+  b.hidden = !label; b.textContent = label || ''; b.onclick = action ? () => { b.onclick = null; action(); } : null;
+  bar.style.transition = 'none'; bar.style.width = '100%';
+  $('toast').hidden = false;
+  requestAnimationFrame(() => requestAnimationFrame(() => { bar.style.transition = `width ${ms}ms linear`; bar.style.width = '0'; }));
+  toastTimer = setTimeout(hideToast, ms);
+}
+function hideToast() { clearTimeout(toastTimer); $('toast').hidden = true; $('toastBtn').onclick = null; }
+
+document.addEventListener('visibilitychange', () => { if (!document.hidden && $('sheet').hidden) loadReady(); });
 applyLang(LANG);
 </script>
 </body>
