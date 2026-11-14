@@ -50,6 +50,9 @@
   .status { font-size: 16px; margin-top: 4px; color: var(--muted); }
   .file.ok .status { color: var(--ok); font-weight: 600; }
   .file.err .status { color: var(--err); font-weight: 600; }
+  .file.retry .status { color: var(--err); }
+  .file.retry .bar > div { background: var(--muted); }
+  #prep { margin-top: 14px; }
   .warn { background: var(--bg); border-radius: 12px; padding: 12px 14px; font-size: 16px; color: var(--muted); margin-top: 14px; }
   .done { background: var(--ok-bg); color: var(--ok); border-radius: 16px; padding: 22px 16px; text-align: center;
           font-size: 24px; font-weight: 800; margin-top: 16px; }
@@ -151,8 +154,9 @@
   </section>
 
   <section class="card" id="pick">
-    <label class="big" for="files" data-t="choose">Choose videos or photos</label>
+    <label class="big" for="files" id="pickBtn" data-t="choose">Choose videos or photos</label>
     <input type="file" id="files" multiple accept="video/*,image/*">
+    <div class="warn" id="prep" hidden data-t="prep">The phone is preparing the videos.</div>
     <div id="chosen" hidden>
       <div class="gap"></div>
       <div id="chosenList"></div>
@@ -166,7 +170,7 @@
   <section class="card" id="progress" hidden>
     <h2 data-t="uploading">Uploading</h2>
     <div id="progressList"></div>
-    <div id="keepOpen" class="warn" data-t="keepOpen">Keep this page open until it finishes</div>
+    <div id="keepOpen" class="warn" data-t="keepOpen2">Keep this page open while it uploads.</div>
     <div class="done" id="done" hidden data-t="done">Done, uploaded</div>
     <div class="partial" id="partial" hidden data-t="partial">Some files did not upload</div>
     <div class="gap"></div>
@@ -234,7 +238,12 @@ const T = {
         trashTitle: 'Recently deleted', trashHint: 'After {n} days videos go to the computer’s Recycle Bin / Trash.',
         trashRow: 'Deleted {a} · to the Trash on {b}', restore: 'Restore', notDone: 'something went wrong',
         busyFile: 'the video is open on the computer, try again', notFound: 'video not found', gone: 'no longer in Recently deleted',
-        notPage: 'request not from this page', cantDel: 'could not delete', cantRestore: 'could not restore' },
+        notPage: 'request not from this page', cantDel: 'could not delete', cantRestore: 'could not restore',
+        prep: 'The phone is preparing the videos for sending. An iPhone can take several minutes for long videos: keep this page open and the screen on, the upload has not started yet.',
+        keepOpen2: 'Keep this page open while it uploads. If the connection drops, the upload continues from the same place by itself.',
+        upPct: 'uploading {p}%', received: 'received ✓', already: 'already received ✓', retrying: 'error, retrying… ({e}, attempt {n} of {m})',
+        notSent: 'did not upload', badPiece: 'bad piece of the file', pieceBusy: 'this piece is still arriving', otherPlace: 'different place in the file',
+        noReply: 'the computer did not answer' },
   ru: { installTitle: 'Один раз: добавьте SaveReel', installText: 'Она сохраняет готовые видео в «Фото».', install: 'Установить SaveReel',
         installHint: 'Safari предложит открыть файл в «Быстрых командах»: нажмите «Открыть», затем кнопку добавления.',
         installDone: 'Готово, добавлено', savePhotos: 'Сохранить в «Фото»', preparing: 'Готовлю…', tapAgain: 'Готово, нажмите ещё раз',
@@ -252,7 +261,12 @@ const T = {
         trashTitle: 'Недавно удалённые', trashHint: 'Через {n} дней видео уходят в Корзину компьютера.',
         trashRow: 'Удалено {a} · в Корзину {b}', restore: 'Вернуть', notDone: 'не получилось',
         busyFile: 'видео сейчас открыто на компьютере, попробуйте ещё раз', notFound: 'видео не найдено', gone: 'уже нет в удалённых',
-        notPage: 'запрос не с этой страницы', cantDel: 'не получилось удалить', cantRestore: 'не получилось вернуть' },
+        notPage: 'запрос не с этой страницы', cantDel: 'не получилось удалить', cantRestore: 'не получилось вернуть',
+        prep: 'Телефон готовит видео к отправке. Длинные видео iPhone может готовить несколько минут: не закрывайте страницу и не выключайте экран, загрузка ещё не началась.',
+        keepOpen2: 'Не закрывайте страницу, пока идёт загрузка. Если связь прервётся, загрузка сама продолжится с того же места.',
+        upPct: 'загружается {p}%', received: 'получено ✓', already: 'уже было получено ✓', retrying: 'ошибка, повторяю… ({e}, попытка {n} из {m})',
+        notSent: 'не загрузилось', badPiece: 'неверный кусок файла', pieceBusy: 'этот кусок ещё принимается', otherPlace: 'другое место в файле',
+        noReply: 'компьютер не ответил' },
   pl: { installTitle: 'Jednorazowo: dodaj SaveReel', installText: 'Zapisuje gotowe filmy w Zdjęciach.', install: 'Zainstaluj SaveReel',
         installHint: 'Safari zapyta, czy otworzyć plik w Skrótach: stuknij Otwórz, potem przycisk dodawania.',
         installDone: 'Gotowe, dodane', savePhotos: 'Zapisz w Zdjęciach', preparing: 'Przygotowuję…', tapAgain: 'Gotowe, stuknij jeszcze raz',
@@ -270,11 +284,17 @@ const T = {
         trashTitle: 'Ostatnio usunięte', trashHint: 'Po {n} dniach filmy trafiają do Kosza komputera.',
         trashRow: 'Usunięto {a} · do Kosza {b}', restore: 'Przywróć', notDone: 'coś poszło nie tak',
         busyFile: 'film jest teraz otwarty na komputerze, spróbuj ponownie', notFound: 'nie znaleziono filmu', gone: 'już nie ma go w usuniętych',
-        notPage: 'żądanie nie z tej strony', cantDel: 'nie udało się usunąć', cantRestore: 'nie udało się przywrócić' },
+        notPage: 'żądanie nie z tej strony', cantDel: 'nie udało się usunąć', cantRestore: 'nie udało się przywrócić',
+        prep: 'Telefon przygotowuje filmy do wysłania. Przy długich filmach iPhone może to robić kilka minut: nie zamykaj strony i nie wyłączaj ekranu, wysyłanie jeszcze się nie zaczęło.',
+        keepOpen2: 'Nie zamykaj strony, dopóki trwa wysyłanie. Jeśli połączenie zostanie przerwane, wysyłanie samo wznowi się od tego samego miejsca.',
+        upPct: 'wysyłanie {p}%', received: 'odebrano ✓', already: 'już odebrane ✓', retrying: 'błąd, ponawiam… ({e}, próba {n} z {m})',
+        notSent: 'nie wysłano', badPiece: 'zły fragment pliku', pieceBusy: 'ten fragment jeszcze dociera', otherPlace: 'inne miejsce w pliku',
+        noReply: 'komputer nie odpowiedział' },
 };
 const SERVER_ERR = { 'not enough space on the computer': 'space', 'only video and photos': 'types',
   'the video is open on the computer, try again': 'busyFile', 'video not found': 'notFound', 'no longer in recently deleted': 'gone',
-  'request not from this page': 'notPage', 'could not delete': 'cantDel', 'could not restore': 'cantRestore' };
+  'request not from this page': 'notPage', 'could not delete': 'cantDel', 'could not restore': 'cantRestore',
+  'bad piece of the file': 'badPiece', 'this piece is still arriving': 'pieceBusy', 'different place in the file': 'otherPlace' };
 const fill = (s, v) => s.replace(/\{(\w)\}/g, (_, k) => v[k] ?? '');
 function pickLang() {
   try { const s = localStorage.getItem('lang'); if (T[s]) return s; } catch {}
@@ -307,8 +327,24 @@ function esc(s) { return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>'
 const okType = f => /^(video|image)\//.test(f.type) ||
   /\.(mov|mp4|m4v|3gp|3g2|avi|mkv|webm|hevc|mts|m2ts|jpe?g|png|heic|heif|webp|gif|bmp|tiff?|dng)$/i.test(f.name);
 
+// The iPhone prepares (copies / converts) long videos BEFORE the page gets them: say so, and log how long it took.
+let pickAt = 0;
+const clog = (event, detail) => fetch(withKey('/api/client-log'), { method: 'POST', headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ event, detail }) }).catch(() => {});
+$('pickBtn').addEventListener('click', () => { pickAt = Date.now(); $('prep').hidden = false; });
+$('files').addEventListener('cancel', () => { $('prep').hidden = true; });
+window.addEventListener('focus', () => setTimeout(() => {      // picker closed without choosing (older iOS has no "cancel")
+  if (pickAt && !$('files').files.length && Date.now() - pickAt > 1500) $('prep').hidden = true;
+}, 1500));
+
 $('files').addEventListener('change', e => {
+  $('prep').hidden = true;
   const all = [...e.target.files];
+  if (pickAt && all.length) {
+    const sec = ((Date.now() - pickAt) / 1000).toFixed(0);
+    clog('picked', `${all.length} file(s) ${sec} s after tapping Choose: ` + all.map(f => `${f.name} ${size(f.size)}`).join(', '));
+  }
+  pickAt = 0;
   picked = all.filter(okType);
   const skipped = all.length - picked.length;
   $('chosenList').innerHTML = picked.map(f =>
@@ -322,15 +358,18 @@ $('send').addEventListener('click', async () => {
   if (!picked.length || busy) return;
   busy = true;
   $('send').disabled = true;
-  try {
-    const r = await fetch('/api/batch?k=' + KEY, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-                                          body: JSON.stringify({ note: $('note').value }) });
-    if (!r.ok) throw new Error();
-    batch = (await r.json()).batch;
-  } catch {
-    busy = false; $('send').disabled = false;
-    alert(t.noAnswer);
-    return;
+  for (let tryNo = 0; !batch; tryNo++) {                     // one folder per send; a retry never makes a second one
+    try {
+      const r = await fetch('/api/batch?k=' + KEY, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ note: $('note').value }) });
+      if (!r.ok) throw new Error();
+      batch = (await r.json()).batch;
+    } catch {
+      if (tryNo < 3) { await nap(2000 * (tryNo + 1)); continue; }
+      busy = false; $('send').disabled = false;
+      alert(t.noAnswer);
+      return;
+    }
   }
   $('pick').hidden = true;
   $('progress').hidden = false;
@@ -344,34 +383,75 @@ $('send').addEventListener('click', async () => {
   await runQueue();
 });
 
-function uploadOne(f, i) {
-  return new Promise(resolve => {
-    const row = $('f' + i), bar = row.querySelector('.bar > div'), st = row.querySelector('.status');
-    row.className = 'file';
+// ---- resumable upload: ask the computer what it already has, send the rest in 16 MB pieces, retry by itself ----
+const PIECE = 16 * 1024 * 1024, STALL_MS = 45000, MAX_TRIES = 12;
+let wake = null;                                            // a waiting retry starts at once when the phone is back
+const nap = ms => new Promise(r => { const tm = setTimeout(r, ms); wake = () => { clearTimeout(tm); r(); }; });
+window.addEventListener('online', () => wake && wake());
+document.addEventListener('visibilitychange', () => { if (!document.hidden && wake) wake(); });
+
+class Fatal extends Error {}
+async function jpost(url, data) {
+  const r = await fetch(withKey(url), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+  let j = {}; try { j = await r.json(); } catch {}
+  if (r.status === 400 || r.status === 413 || r.status === 415) throw new Fatal(serverMsg(j.error));
+  if (!r.ok) throw new Error(j.error ? serverMsg(j.error) : t.noReply);
+  return j;
+}
+
+function sendPiece(f, from, to, onBytes) {               // resolves with the server's JSON {state, offset}
+  return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', `/api/upload?k=${KEY}&batch=${encodeURIComponent(batch)}&name=${encodeURIComponent(f.name)}`);
-    xhr.upload.onprogress = e => {
-      if (!e.lengthComputable) return;
-      const p = e.loaded / e.total * 100;
-      bar.style.width = p.toFixed(1) + '%';
-      st.textContent = `${Math.floor(p)}% · ${size(e.loaded)} ${t.of} ${size(e.total)}`;
-    };
-    xhr.onload = () => {
-      if (xhr.status === 201) {
-        bar.style.width = '100%'; row.className = 'file ok'; st.textContent = t.uploaded + ' · ' + size(f.size); f.state = 'ok';
-      } else {
-        let msg = t.failed;
-        try { const m = JSON.parse(xhr.responseText).error; msg = t[SERVER_ERR[m]] || m || msg; } catch {}
-        row.className = 'file err'; st.textContent = t.failed + ': ' + msg; f.state = 'err';
-      }
-      resolve();
-    };
-    xhr.onerror = xhr.ontimeout = () => {
-      row.className = 'file err'; st.textContent = t.failed + ': ' + t.lost; f.state = 'err'; resolve();
-    };
-    st.textContent = t.sending + ' · ' + size(f.size);
-    xhr.send(f);
+    xhr.open('POST', withKey(`/api/upload/chunk?batch=${encodeURIComponent(batch)}&name=${encodeURIComponent(f.name)}&size=${f.size}&offset=${from}`));
+    xhr.setRequestHeader('Content-Type', 'application/octet-stream');
+    let last = Date.now();
+    const watch = setInterval(() => { if (Date.now() - last > STALL_MS) xhr.abort(); }, 5000);   // a stuck connection
+    const end = fn => (...a) => { clearInterval(watch); fn(...a); };
+    xhr.upload.onprogress = e => { last = Date.now(); onBytes(from + e.loaded); };
+    xhr.onload = end(() => {
+      let j = {}; try { j = JSON.parse(xhr.responseText); } catch {}
+      if (xhr.status === 200 || xhr.status === 201 || xhr.status === 409 && typeof j.offset === 'number') return resolve(j);
+      if (xhr.status === 400 || xhr.status === 413 || xhr.status === 415) return reject(new Fatal(serverMsg(j.error)));
+      reject(new Error(j.error ? serverMsg(j.error) : t.noReply));
+    });
+    xhr.onerror = xhr.onabort = xhr.ontimeout = end(() => reject(new Error(t.lost)));
+    xhr.send(f.slice(from, to));
   });
+}
+
+async function uploadOne(f, i) {
+  const row = $('f' + i), bar = row.querySelector('.bar > div'), st = row.querySelector('.status');
+  const show = (cls, text, pct) => { row.className = 'file' + (cls ? ' ' + cls : ''); st.textContent = text; if (pct !== undefined) bar.style.width = pct + '%'; };
+  const pctOf = b => Math.min(100, b / Math.max(1, f.size) * 100);
+  let tries = 0, sentAll = false;
+  show('', `${fill(t.upPct, { p: 0 })} · ${size(f.size)}`, 0);
+  while (true) {
+    try {
+      const b = await jpost('/api/upload/begin', { batch, name: f.name, size: f.size });
+      if (b.state === 'done') {                            // already on the computer: nothing is sent again
+        f.state = 'ok';
+        return sentAll ? show('ok', `${t.received} · ${size(f.size)}`, 100) : show('ok dup', `${t.already} · ${size(f.size)}`, 100);
+      }
+      let off = b.offset || 0;
+      while (true) {
+        const to = Math.min(f.size, off + PIECE);
+        if (to === f.size) sentAll = true;
+        const r = await sendPiece(f, off, to, done => {
+          const p = pctOf(done); show('', `${fill(t.upPct, { p: Math.floor(p) })} · ${size(done)} ${t.of} ${size(f.size)}`, p.toFixed(1));
+        });
+        if (r.state === 'done') { f.state = 'ok'; return show('ok', `${t.received} · ${size(f.size)}`, 100); }
+        if (r.offset > off) tries = 0;                     // progress: the retry counter starts again
+        off = r.offset;
+      }
+    } catch (e) {
+      if (e instanceof Fatal || ++tries > MAX_TRIES) {
+        f.state = 'err';
+        return show('err', `✕ ${t.notSent}: ${e.message}`);
+      }
+      show('retry', fill(t.retrying, { e: e.message, n: tries, m: MAX_TRIES }));
+      await nap(Math.min(30000, 1500 * 2 ** (tries - 1)));
+    }
+  }
 }
 
 async function runQueue() {

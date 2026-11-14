@@ -13,6 +13,13 @@ Finished videos:
   * the delete button MOVES a video to <output>/_deleted/ (logged in deleted.json and log.txt), Undo / Restore moves it back;
   * after 30 days a deleted video goes to the Recycle Bin / Trash (checked at start and once a day). Never a permanent delete:
     if the Trash cannot take it, it stays in _deleted and is tried again the next day.
+Uploads (1.3.1):
+  * resumable: the page asks /api/upload/begin what is already here, then sends 16 MB pieces to /api/upload/chunk at an offset;
+    bytes go to a hidden ".<name>.<size>.part" file that is renamed only when complete, so a half file never looks finished;
+    an interrupted upload continues from the last byte that arrived (also after a page reload or a server restart);
+  * no double send: a file that already arrived complete (same name and size, any upload batch) is answered "done";
+  * .part files untouched for 24 h are moved to <input>/_deleted (never deleted);
+  * every upload start / resume / finish / abort / duplicate is logged in <output>/_deleted/uploads-log.txt.
 Run through: reel-tool upload-page
 """
 import ctypes, hashlib, hmac, ipaddress, json, os, re, shutil, socket, subprocess, sys, threading, time, unicodedata, uuid
@@ -23,6 +30,8 @@ from urllib.parse import parse_qs, quote, urlparse
 HERE = os.path.dirname(os.path.abspath(__file__))
 UPLOADS, READY, PORT, KEY = "", "", 5080, ""
 KEEP_DAYS = 30                                            # then _deleted -> Recycle Bin / Trash
+PART_MAX_AGE = 24 * 3600                                  # an unfinished upload untouched this long is stale
+CHUNK_MAX = 64 * 1024**2                                  # one resumable piece (the page sends 16 MB)
 
 VIDEO_EXT = {".mov", ".mp4", ".m4v", ".3gp", ".3g2", ".avi", ".mkv", ".webm", ".hevc", ".mts", ".m2ts"}
 IMAGE_EXT = {".jpg", ".jpeg", ".png", ".heic", ".heif", ".webp", ".gif", ".bmp", ".tif", ".tiff", ".dng"}
@@ -58,6 +67,14 @@ def deleted_index():
 
 def deleted_log():
     return os.path.join(deleted_dir(), "log.txt")
+
+
+def upload_log_file():
+    return os.path.join(deleted_dir(), "uploads-log.txt")
+
+
+def uploads_deleted():
+    return os.path.join(UPLOADS, "_deleted")
 
 
 def cache_dir():
@@ -459,12 +476,111 @@ def sweep_deleted(now=None):
 
 
 def sweeper():
+    """every hour: stale .part files -> <input>/_deleted; once a day: the 30-day check of <output>/_deleted"""
+    last_day = 0.0
     while True:
         try:
-            sweep_deleted()
+            sweep_parts()
         except Exception as e:
-            log(f"30-day check error: {e!r}")
-        time.sleep(24 * 3600)
+            log(f"stale .part check error: {e!r}")
+        if time.time() - last_day >= 24 * 3600:
+            last_day = time.time()
+            try:
+                sweep_deleted()
+            except Exception as e:
+                log(f"30-day check error: {e!r}")
+        time.sleep(3600)
+
+
+# ---------------------------------------------------------------- uploads: log, resumable .part files, duplicates
+upload_lock = threading.Lock()                             # one writer per .part file at a time
+part_busy = set()
+part_started = {}                                          # part path -> (start time, offset at start) for the log
+
+
+def upload_log(ip, event, detail):
+    """<output>/_deleted/uploads-log.txt: one line per upload event, append-only"""
+    line = f"{stamp(time.time())}  {ip:<15}  {event:<9}  {detail}"
+    log(f"upload log: {event} {detail}")
+    try:
+        os.makedirs(os.path.dirname(upload_log_file()), exist_ok=True)
+        with open(upload_log_file(), "a", encoding="utf-8") as f:
+            f.write(line + "\n")
+    except OSError as e:
+        log(f"upload log write FAILED: {e!r}")
+
+
+def batch_dirs():
+    if not os.path.isdir(UPLOADS):
+        return []
+    return [os.path.join(UPLOADS, d) for d in sorted(os.listdir(UPLOADS), reverse=True)
+            if BATCH_RE.match(d) and os.path.isdir(os.path.join(UPLOADS, d))]
+
+
+def part_name(name, size):
+    return f".{name}.{size}.part"                          # hidden, never a video extension: can't look finished
+
+
+def find_complete(name, size, first=None):
+    """an upload that already arrived complete: same name (or name_2, _3 ... from a clash) and the same size, any batch"""
+    stem, ext = os.path.splitext(name)
+    same = re.compile(re.escape(stem) + r"(_\d+)?" + re.escape(ext) + r"$", re.I)
+    dirs = batch_dirs()
+    if first:
+        dirs = [first] + [d for d in dirs if os.path.normcase(d) != os.path.normcase(first)]
+    for d in dirs:
+        try:
+            for n in os.listdir(d):
+                p = os.path.join(d, n)
+                if same.match(n) and os.path.isfile(p) and os.path.getsize(p) == size:
+                    return os.path.basename(d) + "/" + n
+        except OSError:
+            continue
+    return None
+
+
+def find_part(name, size, folder):
+    """an unfinished upload of this file: in this batch first, else in another batch (it is moved here and continued)"""
+    pn = part_name(name, size)
+    if os.path.isfile(os.path.join(folder, pn)):
+        return os.path.join(folder, pn)
+    for d in batch_dirs():
+        p = os.path.join(d, pn)
+        if os.path.normcase(d) != os.path.normcase(folder) and os.path.isfile(p):
+            try:
+                os.replace(p, os.path.join(folder, pn))
+                return os.path.join(folder, pn)
+            except OSError:
+                return None
+    return None
+
+
+def sweep_parts(now=None):
+    """.part files untouched for 24 h -> <input>/_deleted (moved, never deleted); logged"""
+    now = now or time.time()
+    moved = []
+    for d in batch_dirs():
+        try:
+            names = os.listdir(d)
+        except OSError:
+            continue
+        for n in names:
+            p = os.path.join(d, n)
+            if not n.endswith(".part") or not os.path.isfile(p):
+                continue
+            with upload_lock:
+                if p in part_busy or now - os.path.getmtime(p) < PART_MAX_AGE:
+                    continue
+                os.makedirs(uploads_deleted(), exist_ok=True)
+                try:
+                    final = place_without_overwrite(p, uploads_deleted(), os.path.basename(d) + "_" + n.lstrip("."))
+                except OSError as e:
+                    log(f"stale .part move FAILED {p}: {e!r}")
+                    continue
+            size = os.path.getsize(os.path.join(uploads_deleted(), final))
+            upload_log("-", "stale", f"{os.path.basename(d)}/{n} ({size / 1024**2:.1f} MB, untouched 24 h) -> _deleted/{final}")
+            moved.append(final)
+    return moved
 
 
 def deleted_list():
@@ -635,7 +751,7 @@ class Handler(BaseHTTPRequestHandler):
             self.stream(self.by_id(url.path[8:20]))
         elif re.fullmatch(r"/poster/[0-9a-f]{12}\.jpg", url.path):
             self.poster(self.by_id(url.path[8:20]))
-        elif url.path in ("/api/delete", "/api/restore", "/api/played"):
+        elif url.path in ("/api/delete", "/api/restore", "/api/played", "/api/upload/begin", "/api/upload/chunk", "/api/client-log"):
             self.fail(405, "POST only", headers=(("Allow", "POST"),))
         else:
             self.fail(404, "not found")
@@ -648,6 +764,19 @@ class Handler(BaseHTTPRequestHandler):
             return self.new_batch()
         if url.path == "/api/upload":
             return self.upload(parse_qs(url.query))
+        if url.path == "/api/upload/chunk":
+            if not self.same_page():
+                self.discard_body()
+                return self.fail(403, "request not from this page")
+            return self.upload_chunk(parse_qs(url.query))
+        if url.path in ("/api/upload/begin", "/api/client-log"):
+            if not self.same_page():
+                self.discard_body()
+                return self.fail(403, "request not from this page")
+            data = self.read_json()
+            if data is None:
+                return
+            return (self.upload_begin if url.path == "/api/upload/begin" else self.client_log)(data)
         if url.path in ("/api/delete", "/api/restore", "/api/played"):
             if not self.same_page():
                 self.discard_body()
@@ -786,6 +915,118 @@ class Handler(BaseHTTPRequestHandler):
                 self.wfile.write(chunk)
                 left -= len(chunk)
 
+    # ---- resumable uploads (the page): begin -> pieces at an offset -> rename when complete ----
+    def upload_args(self, batch, name, size):
+        folder = self.batch_dir({"batch": [str(batch)]})
+        name = safe_name(str(name))
+        try:
+            size = int(size)
+        except (TypeError, ValueError):
+            size = -1
+        return folder, name, size
+
+    def upload_begin(self, data):
+        """{batch, name, size} -> {"state": "done"} if this file already arrived complete (any batch, same name + size),
+        else {"state": "new"|"resume", "offset": bytes already here}"""
+        folder, name, size = self.upload_args(data.get("batch"), data.get("name"), data.get("size"))
+        ip = self.client_address[0]
+        if folder is None:
+            return self.fail(400, "unknown upload")
+        if name is None:
+            return self.fail(415, "only video and photos")
+        if size < 0 or size > MAX_UPLOAD:
+            return self.fail(413, "not enough space on the computer")
+        with upload_lock:
+            done = find_complete(name, size, folder)
+            if done:
+                upload_log(ip, "already", f"{name} ({size / 1024**2:.1f} MB) already received: {done}")
+                return self.send_json(200, {"state": "done", "saved": done, "already": True})
+            part = find_part(name, size, folder) or os.path.join(folder, part_name(name, size))
+            offset = os.path.getsize(part) if os.path.isfile(part) else 0
+            if offset > size:                                # cannot be ours: start clean (the old bytes are kept aside)
+                os.makedirs(uploads_deleted(), exist_ok=True)
+                place_without_overwrite(part, uploads_deleted(), os.path.basename(folder) + "_" + os.path.basename(part).lstrip("."))
+                offset = 0
+        if size - offset > shutil.disk_usage(UPLOADS).free - DISK_RESERVE:
+            return self.fail(413, "not enough space on the computer")
+        part_started[part] = (time.time(), offset)
+        upload_log(ip, "resume" if offset else "start",
+                   f"{os.path.basename(folder)}/{name}  {size / 1024**2:.1f} MB" + (f"  from {offset / 1024**2:.1f} MB" if offset else ""))
+        self.send_json(200, {"state": "resume" if offset else "new", "offset": offset})
+
+    def upload_chunk(self, q):
+        """body = bytes [offset, offset + len) of the file; appended to the .part file only if offset == its size.
+        A complete .part is renamed to the real name; an interrupted piece keeps what arrived, so the page resumes."""
+        folder, name, size = self.upload_args((q.get("batch") or [""])[0], (q.get("name") or [""])[0], (q.get("size") or [""])[0])
+        n, ip = self.body_length(), self.client_address[0]
+        try:
+            offset = int((q.get("offset") or [""])[0])
+        except ValueError:
+            offset = -1
+        if folder is None or name is None or size < 0 or offset < 0:
+            self.discard_body(); return self.fail(400, "unknown upload")
+        if n is None or n > CHUNK_MAX or offset + n > size:
+            return self.fail(400, "bad piece of the file", close=True)
+        part = os.path.join(folder, part_name(name, size))
+        with upload_lock:
+            if part in part_busy:                             # the previous try of this piece is still being written
+                self.discard_body()
+                return self.fail(409, "this piece is still arriving", headers=(("Retry-After", "2"),))
+            if not os.path.isfile(part):
+                done = find_complete(name, size, folder)
+                if done:                                     # the last answer was lost: it is already complete
+                    self.discard_body()
+                    return self.send_json(200, {"state": "done", "saved": done})
+            have = os.path.getsize(part) if os.path.isfile(part) else 0
+            if offset != have:
+                self.discard_body()
+                return self.send_json(409, {"error": "different place in the file", "offset": have})
+            part_busy.add(part)
+        got = 0
+        try:
+            with open(part, "ab") as out:
+                while got < n:
+                    chunk = self.rfile.read(min(CHUNK, n - got))
+                    if not chunk:
+                        break
+                    out.write(chunk)
+                    got += len(chunk)
+            if got < n:
+                raise ConnectionError("client stopped sending")
+        except Exception as e:
+            self.close_connection = True
+            with upload_lock:
+                part_busy.discard(part)
+            upload_log(ip, "abort", f"{os.path.basename(folder)}/{name}  stopped at {(offset + got) / 1024**2:.1f} of {size / 1024**2:.1f} MB "
+                                    f"({e.__class__.__name__}); the .part is kept, the upload can continue")
+            if not isinstance(e, (ConnectionError, socket.timeout)):
+                try:
+                    self.fail(500, "could not save", close=True)
+                except OSError:
+                    pass
+            return
+        with upload_lock:
+            part_busy.discard(part)
+            have = offset + got
+            if have < size:
+                return self.send_json(200, {"state": "partial", "offset": have})
+            try:
+                final = place_without_overwrite(part, folder, name)
+            except OSError as e:
+                log(f"rename FAILED {part}: {e!r}")
+                return self.fail(500, "could not save")
+        t0, off0 = part_started.pop(part, (None, 0))
+        took = f", {time.time() - t0:.0f} s, {(size - off0) / 1024**2 / max(0.1, time.time() - t0):.1f} MB/s" if t0 else ""
+        upload_log(ip, "finish", f"{os.path.basename(folder)}/{final}  {size / 1024**2:.1f} MB{took}")
+        self.send_json(201, {"state": "done", "saved": os.path.basename(folder) + "/" + final, "size": size})
+
+    def client_log(self, data):
+        """what the phone itself reports (e.g. how long the iPhone prepared the videos before the page got them)"""
+        ev = re.sub(r"[^\w-]", "", str(data.get("event", "")))[:30] or "page"
+        detail = re.sub(r"[\r\n\t]+", " ", str(data.get("detail", "")))[:600]
+        upload_log(self.client_address[0], ev, detail)
+        self.send_json(200, {"ok": True})
+
     # ---- uploads ----
     def new_batch(self):
         n = self.body_length()
@@ -811,6 +1052,7 @@ class Handler(BaseHTTPRequestHandler):
         if note:
             with open(os.path.join(UPLOADS, name, "note.txt"), "w", encoding="utf-8") as f:
                 f.write(f"What to do with this video ({time.strftime('%Y-%m-%d %H:%M')}):\n{note}\n")
+        upload_log(self.client_address[0], "batch", name + (f"  note: {note[:200]}" if note else ""))
         self.send_json(201, {"batch": name})
 
     def upload(self, q):
@@ -828,6 +1070,8 @@ class Handler(BaseHTTPRequestHandler):
             return self.fail(413, "not enough space on the computer", close=True)
         tmp = os.path.join(folder, f".{os.getpid()}_{threading.get_ident()}_{time.time_ns()}.part")
         left = n
+        t0, where = time.time(), os.path.basename(folder) + "/" + name
+        upload_log(self.client_address[0], "start", f"{where}  {n / 1024**2:.1f} MB (one request)")
         try:
             with open(tmp, "xb") as out:
                 while left > 0:
@@ -846,6 +1090,8 @@ class Handler(BaseHTTPRequestHandler):
             except OSError:
                 pass
             self.log_message("upload FAILED %s (%s)", name, e)
+            upload_log(self.client_address[0], "abort", f"{where}  stopped at {(n - left) / 1024**2:.1f} of {n / 1024**2:.1f} MB "
+                                                        f"({e.__class__.__name__}); the unfinished file was not kept")
             if not isinstance(e, (ConnectionError, socket.timeout)):
                 try:
                     self.fail(500, "could not save", close=True)
@@ -853,6 +1099,7 @@ class Handler(BaseHTTPRequestHandler):
                     pass
             return
         self.log_message("saved %s\\%s (%.1f MB)", os.path.basename(folder), final, n / 1024**2)
+        upload_log(self.client_address[0], "finish", f"{os.path.basename(folder)}/{final}  {n / 1024**2:.1f} MB, {time.time() - t0:.0f} s")
         self.send_json(201, {"saved": final, "size": n})
 
 
@@ -895,12 +1142,13 @@ def serve(uploads, ready, port, key):
     FFMPEG, FFPROBE = find_tool("ffmpeg"), find_tool("ffprobe")
     srv = Server(("0.0.0.0", PORT), Handler)
     threading.Thread(target=thumb_worker, name="posters", daemon=True).start()
-    threading.Thread(target=sweeper, name="30-days", daemon=True).start()
+    threading.Thread(target=sweeper, name="30-days + stale parts", daemon=True).start()
     print("Upload page is running. Open on the phone:", flush=True)
     for ip in lan_ips():
         print(f"  http://{ip}:{PORT}/?k={KEY}", flush=True)
     print(f"Clips go to: {UPLOADS}\nFinished Reels come from: {READY}\n"
           f"Deleted Reels wait in: {deleted_dir()} (after {KEEP_DAYS} days they go to the Recycle Bin / Trash)\n"
+          f"Upload log: {upload_log_file()}\n"
           f"Local network and Tailscale only. Stop with Ctrl+C.", flush=True)
     try:
         srv.serve_forever()

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.1 (2026-11-14)
+
+Phone uploads survive interruptions and are never sent twice: the page sends 16 MB pieces and continues from the last byte that arrived after a dropped connection, a page reload or a computer restart (a half file is a hidden .part until complete; stale ones move to `_deleted` after 24 h); a file that already arrived (same name and size) is answered "already received" instead of being uploaded again; each file shows uploading %, received, already received or error, retrying; the page says when the iPhone is still preparing long videos; every upload start, finish, abort and duplicate is logged in `_deleted/uploads-log.txt` in the output folder.
+
 ## 1.3.0 (2026-11-09)
 
 Finished videos on the phone page: watch them inline in full quality as poster cards, with a "New" badge until first played; the delete button moves a video to `_deleted` in the output folder with Undo and "Recently deleted" to restore it, and after 30 days it goes to the Recycle Bin / Trash (never a permanent delete). Delete, restore and played are POST only, from the page itself. English, Russian and Polish.
