@@ -616,8 +616,14 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Cache-Control", "no-store")
         for k, v in headers:
             self.send_header(k, v)
+        if self.close_connection:
+            self.send_header("Connection", "close")
         self.end_headers()
         self.body(body)
+        try:
+            self.wfile.flush()
+        except OSError:
+            pass
 
     def fail(self, code, msg, close=False, headers=()):
         if close:
@@ -956,7 +962,10 @@ class Handler(BaseHTTPRequestHandler):
 
     def upload_chunk(self, q):
         """body = bytes [offset, offset + len) of the file; appended to the .part file only if offset == its size.
-        A complete .part is renamed to the real name; an interrupted piece keeps what arrived, so the page resumes."""
+        A complete .part is renamed to the real name; an interrupted piece keeps what arrived, so the page resumes.
+        Every answer here ends its connection ("Connection: close"): iPhone Safari can leave the answer to a piece unread
+        on a kept-alive connection and sit until the page gives up; a fresh connection per piece avoids that."""
+        self.close_connection = True
         folder, name, size = self.upload_args((q.get("batch") or [""])[0], (q.get("name") or [""])[0], (q.get("size") or [""])[0])
         n, ip = self.body_length(), self.client_address[0]
         try:

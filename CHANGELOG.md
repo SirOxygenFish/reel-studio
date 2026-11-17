@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.2 (2026-11-17)
+
+Phone uploads no longer stall between pieces: the computer closes the connection after every piece, so iPhone Safari opens a fresh one instead of sitting about 45 s on a reused one; a piece that went out but got no answer is checked after 8 s and the upload goes on at once, and a hung connection is noticed after 15 s (longer on slow lines) instead of 45 s.
+
 ## 1.3.1 (2026-11-14)
 
 Phone uploads survive interruptions and are never sent twice: the page sends 16 MB pieces and continues from the last byte that arrived after a dropped connection, a page reload or a computer restart (a half file is a hidden .part until complete; stale ones move to `_deleted` after 24 h); a file that already arrived (same name and size) is answered "already received" instead of being uploaded again; each file shows uploading %, received, already received or error, retrying; the page says when the iPhone is still preparing long videos; every upload start, finish, abort and duplicate is logged in `_deleted/uploads-log.txt` in the output folder.

@@ -384,13 +384,17 @@ $('send').addEventListener('click', async () => {
 });
 
 // ---- resumable upload: ask the computer what it already has, send the rest in 16 MB pieces, retry by itself ----
-const PIECE = 16 * 1024 * 1024, STALL_MS = 45000, MAX_TRIES = 12;
+const PIECE = 16 * 1024 * 1024, MAX_TRIES = 12;
+const STALL_MS = 15000, STALL_MAX = 60000;                 // no bytes moving for 15 s = hung (longer after repeated hangs)
+const ANSWER_MS = 8000;                                     // whole piece sent but no answer: ask the computer what it has
+let stallMs = STALL_MS;
 let wake = null;                                            // a waiting retry starts at once when the phone is back
 const nap = ms => new Promise(r => { const tm = setTimeout(r, ms); wake = () => { clearTimeout(tm); r(); }; });
 window.addEventListener('online', () => wake && wake());
 document.addEventListener('visibilitychange', () => { if (!document.hidden && wake) wake(); });
 
 class Fatal extends Error {}
+class NoAnswer extends Error {}                             // the piece went out; only its answer is missing
 async function jpost(url, data) {
   const r = await fetch(withKey(url), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
   let j = {}; try { j = await r.json(); } catch {}
@@ -399,22 +403,36 @@ async function jpost(url, data) {
   return j;
 }
 
+// One XHR per piece; the computer closes the connection after each answer (iPhone Safari could sit ~45 s on a reused one).
 function sendPiece(f, from, to, onBytes) {               // resolves with the server's JSON {state, offset}
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', withKey(`/api/upload/chunk?batch=${encodeURIComponent(batch)}&name=${encodeURIComponent(f.name)}&size=${f.size}&offset=${from}`));
+    xhr.open('POST', withKey(`/api/upload/chunk?batch=${encodeURIComponent(batch)}&name=${encodeURIComponent(f.name)}&size=${f.size}&offset=${from}&t=${Date.now()}`));
     xhr.setRequestHeader('Content-Type', 'application/octet-stream');
-    let last = Date.now();
-    const watch = setInterval(() => { if (Date.now() - last > STALL_MS) xhr.abort(); }, 5000);   // a stuck connection
-    const end = fn => (...a) => { clearInterval(watch); fn(...a); };
-    xhr.upload.onprogress = e => { last = Date.now(); onBytes(from + e.loaded); };
-    xhr.onload = end(() => {
+    let last = Date.now(), sentAt = 0, settled = false;
+    const finish = (fn, v) => { if (settled) return; settled = true; clearInterval(watch); fn(v); };
+    const giveUp = why => {                                 // settle here: abort() fires no event on a finished request
+      if (why === 'stall') stallMs = Math.min(STALL_MAX, stallMs * 2);       // a slow line gets more patience next time
+      finish(reject, why === 'answer' ? new NoAnswer(t.noReply) : new Error(t.lost));
+      try { xhr.abort(); } catch {}
+    };
+    const watch = setInterval(() => {
+      const now = Date.now();
+      if (sentAt && now - sentAt > ANSWER_MS) giveUp('answer');
+      else if (!sentAt && now - last > stallMs) giveUp('stall');
+    }, 1000);
+    xhr.upload.onprogress = e => {
+      last = Date.now(); onBytes(from + e.loaded);
+      if (e.lengthComputable && e.loaded >= e.total && !sentAt) sentAt = last;
+    };
+    xhr.upload.onload = () => { if (!sentAt) sentAt = Date.now(); };
+    xhr.onload = () => {
       let j = {}; try { j = JSON.parse(xhr.responseText); } catch {}
-      if (xhr.status === 200 || xhr.status === 201 || xhr.status === 409 && typeof j.offset === 'number') return resolve(j);
-      if (xhr.status === 400 || xhr.status === 413 || xhr.status === 415) return reject(new Fatal(serverMsg(j.error)));
-      reject(new Error(j.error ? serverMsg(j.error) : t.noReply));
-    });
-    xhr.onerror = xhr.onabort = xhr.ontimeout = end(() => reject(new Error(t.lost)));
+      if (xhr.status === 200 || xhr.status === 201 || xhr.status === 409 && typeof j.offset === 'number') return finish(resolve, j);
+      if (xhr.status === 400 || xhr.status === 413 || xhr.status === 415) return finish(reject, new Fatal(serverMsg(j.error)));
+      finish(reject, new Error(j.error ? serverMsg(j.error) : t.noReply));
+    };
+    xhr.onerror = xhr.onabort = xhr.ontimeout = () => finish(reject, new Error(t.lost));
     xhr.send(f.slice(from, to));
   });
 }
@@ -423,7 +441,7 @@ async function uploadOne(f, i) {
   const row = $('f' + i), bar = row.querySelector('.bar > div'), st = row.querySelector('.status');
   const show = (cls, text, pct) => { row.className = 'file' + (cls ? ' ' + cls : ''); st.textContent = text; if (pct !== undefined) bar.style.width = pct + '%'; };
   const pctOf = b => Math.min(100, b / Math.max(1, f.size) * 100);
-  let tries = 0, sentAll = false;
+  let tries = 0, sentAll = false, known = -1;
   show('', `${fill(t.upPct, { p: 0 })} · ${size(f.size)}`, 0);
   while (true) {
     try {
@@ -433,6 +451,7 @@ async function uploadOne(f, i) {
         return sentAll ? show('ok', `${t.received} · ${size(f.size)}`, 100) : show('ok dup', `${t.already} · ${size(f.size)}`, 100);
       }
       let off = b.offset || 0;
+      if (off > known) { tries = 0; known = off; }         // the computer got more than before: not a failure
       while (true) {
         const to = Math.min(f.size, off + PIECE);
         if (to === f.size) sentAll = true;
@@ -440,16 +459,17 @@ async function uploadOne(f, i) {
           const p = pctOf(done); show('', `${fill(t.upPct, { p: Math.floor(p) })} · ${size(done)} ${t.of} ${size(f.size)}`, p.toFixed(1));
         });
         if (r.state === 'done') { f.state = 'ok'; return show('ok', `${t.received} · ${size(f.size)}`, 100); }
-        if (r.offset > off) tries = 0;                     // progress: the retry counter starts again
+        if (r.offset > off) { tries = 0; stallMs = STALL_MS; known = Math.max(known, r.offset); }
         off = r.offset;
       }
     } catch (e) {
+      if (e instanceof NoAnswer && tries < MAX_TRIES) { tries++; continue; }   // ask at once where to go on (reset if it arrived)
       if (e instanceof Fatal || ++tries > MAX_TRIES) {
         f.state = 'err';
         return show('err', `✕ ${t.notSent}: ${e.message}`);
       }
       show('retry', fill(t.retrying, { e: e.message, n: tries, m: MAX_TRIES }));
-      await nap(Math.min(30000, 1500 * 2 ** (tries - 1)));
+      await nap(Math.min(30000, 1000 * 2 ** (tries - 1)));
     }
   }
 }
