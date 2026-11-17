@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.3 (2026-11-17)
+
+Phone uploads from iPhone Safari get each piece's answer at once again: every 16 MB piece is read into memory and sent as plain bytes instead of as a slice of the picked file (iPhone Safari did not finish a request whose body is a slice that ends before the end of the file, so every piece waited for the 8 s check). The 8 s check stays as a safety net.
+
 ## 1.3.2 (2026-11-17)
 
 Phone uploads no longer stall between pieces: the computer closes the connection after every piece, so iPhone Safari opens a fresh one instead of sitting about 45 s on a reused one; a piece that went out but got no answer is checked after 8 s and the upload goes on at once, and a hung connection is noticed after 15 s (longer on slow lines) instead of 45 s.

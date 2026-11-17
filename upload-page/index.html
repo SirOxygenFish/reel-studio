@@ -404,7 +404,10 @@ async function jpost(url, data) {
 }
 
 // One XHR per piece; the computer closes the connection after each answer (iPhone Safari could sit ~45 s on a reused one).
-function sendPiece(f, from, to, onBytes) {               // resolves with the server's JSON {state, offset}
+// Each piece is read into memory first and sent as plain bytes. iPhone Safari did not finish a request whose body is a
+// slice of a disk file ending before the file's end (it never read the answer; only the last piece got one, Nov 17).
+async function sendPiece(f, from, to, onBytes) {         // resolves with the server's JSON {state, offset}
+  const bytes = await f.slice(from, to).arrayBuffer();
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open('POST', withKey(`/api/upload/chunk?batch=${encodeURIComponent(batch)}&name=${encodeURIComponent(f.name)}&size=${f.size}&offset=${from}&t=${Date.now()}`));
@@ -433,7 +436,7 @@ function sendPiece(f, from, to, onBytes) {               // resolves with the se
       finish(reject, new Error(j.error ? serverMsg(j.error) : t.noReply));
     };
     xhr.onerror = xhr.onabort = xhr.ontimeout = () => finish(reject, new Error(t.lost));
-    xhr.send(f.slice(from, to));
+    xhr.send(bytes);
   });
 }
 
