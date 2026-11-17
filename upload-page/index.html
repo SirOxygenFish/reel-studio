@@ -383,7 +383,9 @@ $('send').addEventListener('click', async () => {
   await runQueue();
 });
 
-// ---- resumable upload: ask the computer what it already has, send the rest in 16 MB pieces, retry by itself ----
+// ---- upload: ask the computer what it already has, send the rest as ONE streaming request; only if that breaks,
+//      go on in 16 MB pieces from the byte the computer has, retrying by itself ----
+const PAGE_VERSION = '1.3.4';                              // the server reads this; an old open tab reloads itself
 const PIECE = 16 * 1024 * 1024, MAX_TRIES = 12;
 const STALL_MS = 15000, STALL_MAX = 60000;                 // no bytes moving for 15 s = hung (longer after repeated hangs)
 const ANSWER_MS = 8000;                                     // whole piece sent but no answer: ask the computer what it has
@@ -404,13 +406,13 @@ async function jpost(url, data) {
 }
 
 // One XHR per piece; the computer closes the connection after each answer (iPhone Safari could sit ~45 s on a reused one).
-// Each piece is read into memory first and sent as plain bytes. iPhone Safari did not finish a request whose body is a
-// slice of a disk file ending before the file's end (it never read the answer; only the last piece got one, Nov 17).
-async function sendPiece(f, from, to, onBytes) {         // resolves with the server's JSON {state, offset}
-  const bytes = await f.slice(from, to).arrayBuffer();
+function sendPiece(f, from, to, onBytes, single) {        // resolves with the server's JSON {state, offset}
+  // the file itself (single, from the start) or a slice of it, streamed from disk; nothing is read into memory
+  // (1.3.3 read each piece into memory first: no help on the iPhone, and it could hang before the watchdog ran)
+  const bytes = single && from === 0 ? f : f.slice(from, to);
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', withKey(`/api/upload/chunk?batch=${encodeURIComponent(batch)}&name=${encodeURIComponent(f.name)}&size=${f.size}&offset=${from}&t=${Date.now()}`));
+    xhr.open('POST', withKey(`/api/upload/chunk?batch=${encodeURIComponent(batch)}&name=${encodeURIComponent(f.name)}&size=${f.size}&offset=${from}${single ? '&mode=single' : ''}&t=${Date.now()}`));
     xhr.setRequestHeader('Content-Type', 'application/octet-stream');
     let last = Date.now(), sentAt = 0, settled = false;
     const finish = (fn, v) => { if (settled) return; settled = true; clearInterval(watch); fn(v); };
@@ -444,11 +446,11 @@ async function uploadOne(f, i) {
   const row = $('f' + i), bar = row.querySelector('.bar > div'), st = row.querySelector('.status');
   const show = (cls, text, pct) => { row.className = 'file' + (cls ? ' ' + cls : ''); st.textContent = text; if (pct !== undefined) bar.style.width = pct + '%'; };
   const pctOf = b => Math.min(100, b / Math.max(1, f.size) * 100);
-  let tries = 0, sentAll = false, known = -1;
+  let tries = 0, sentAll = false, known = -1, single = true;   // one request first; pieces only after it fails
   show('', `${fill(t.upPct, { p: 0 })} · ${size(f.size)}`, 0);
   while (true) {
     try {
-      const b = await jpost('/api/upload/begin', { batch, name: f.name, size: f.size });
+      const b = await jpost('/api/upload/begin', { batch, name: f.name, size: f.size, mode: single ? 'single' : 'pieces', v: PAGE_VERSION });
       if (b.state === 'done') {                            // already on the computer: nothing is sent again
         f.state = 'ok';
         return sentAll ? show('ok', `${t.received} · ${size(f.size)}`, 100) : show('ok dup', `${t.already} · ${size(f.size)}`, 100);
@@ -456,11 +458,17 @@ async function uploadOne(f, i) {
       let off = b.offset || 0;
       if (off > known) { tries = 0; known = off; }         // the computer got more than before: not a failure
       while (true) {
-        const to = Math.min(f.size, off + PIECE);
+        const to = single ? f.size : Math.min(f.size, off + PIECE);
         if (to === f.size) sentAll = true;
-        const r = await sendPiece(f, off, to, done => {
-          const p = pctOf(done); show('', `${fill(t.upPct, { p: Math.floor(p) })} · ${size(done)} ${t.of} ${size(f.size)}`, p.toFixed(1));
-        });
+        let r;
+        try {
+          r = await sendPiece(f, off, to, done => {
+            const p = pctOf(done); show('', `${fill(t.upPct, { p: Math.floor(p) })} · ${size(done)} ${t.of} ${size(f.size)}`, p.toFixed(1));
+          }, single);
+        } catch (e) {
+          if (single && !(e instanceof Fatal)) { single = false; e = new NoAnswer(e.message); }   // go on in pieces at once
+          throw e;
+        }
         if (r.state === 'done') { f.state = 'ok'; return show('ok', `${t.received} · ${size(f.size)}`, 100); }
         if (r.offset > off) { tries = 0; stallMs = STALL_MS; known = Math.max(known, r.offset); }
         off = r.offset;
@@ -693,6 +701,7 @@ function loadReady() {
       const r = await fetch(withKey('/api/ready'), { cache: 'no-store' });
       if (!r.ok) throw new Error();
       const j = await r.json();
+      if (j.page && j.page !== PAGE_VERSION && !busy && !picked.length) { location.reload(); return; }   // old tab
       files = j.files; deleted = j.deleted || []; keepDays = j.keep_days || 30;
       renderReady(); renderTrash();
       if (files.some(f => f.kind === 'video' && !f.poster)) setTimeout(loadReady, 8000);   // posters still being made
@@ -774,6 +783,7 @@ function showToast(text, label, action, ms = 8000) {
 function hideToast() { clearTimeout(toastTimer); $('toast').hidden = true; $('toastBtn').onclick = null; }
 
 document.addEventListener('visibilitychange', () => { if (!document.hidden && $('sheet').hidden) loadReady(); });
+window.addEventListener('pageshow', e => { if (e.persisted) loadReady(); });   // back from Safari's page cache: check version
 applyLang(LANG);
 </script>
 </body>

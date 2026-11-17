@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.4 (2026-11-17)
+
+Phone uploads go up as one streaming request per file again, the way they did before resumable uploads (iPhone Safari always got the answer to that). Only if that request breaks does the page go on in 16 MB pieces from the byte the computer already has; the .part file, the duplicate check and the upload log stay. Pieces are sent straight from the file again (1.3.3 read each one into memory first, which did not help on the iPhone). The upload log now says for every file whether it went up in one request or in pieces, with the speed, and which page version the phone runs; the page itself is never cached, and a tab left open on an older page reloads itself.
+
 ## 1.3.3 (2026-11-17)
 
 Phone uploads from iPhone Safari get each piece's answer at once again: every 16 MB piece is read into memory and sent as plain bytes instead of as a slice of the picked file (iPhone Safari did not finish a request whose body is a slice that ends before the end of the file, so every piece waited for the 8 s check). The 8 s check stays as a safety net.

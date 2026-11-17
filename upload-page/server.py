@@ -495,7 +495,18 @@ def sweeper():
 # ---------------------------------------------------------------- uploads: log, resumable .part files, duplicates
 upload_lock = threading.Lock()                             # one writer per .part file at a time
 part_busy = set()
-part_started = {}                                          # part path -> (start time, offset at start) for the log
+part_started = {}                                          # part path -> {t0, off0, mode, pieces, resumes, broke} for the log
+PAGE_VER_RE = re.compile(r"const PAGE_VERSION = '([\w.-]+)'")
+
+
+def page_version():
+    """the version the page on disk declares; /api/ready returns it so an old open tab reloads itself"""
+    try:
+        with open(os.path.join(HERE, "index.html"), encoding="utf-8") as f:
+            m = PAGE_VER_RE.search(f.read())
+        return m.group(1) if m else ""
+    except OSError:
+        return ""
 
 
 def upload_log(ip, event, detail):
@@ -723,10 +734,15 @@ class Handler(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
             self.send_header("Content-Length", str(len(body)))
-            self.send_header("Cache-Control", "no-store")
+            self.send_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")   # the script is inline:
+            self.send_header("Pragma", "no-cache")                                            # a reload always gets it new
+            self.send_header("Expires", "0")
             self.send_header("Referrer-Policy", "no-referrer")
             self.end_headers()
             self.body(body)
+            if not self.head_only:                                   # shows in the log whether a phone got the new page
+                m = PAGE_VER_RE.search(body.decode("utf-8", "replace"))
+                upload_log(self.client_address[0], "page", f"page opened (version {m.group(1) if m else '?'})")
         elif url.path == "/api/ready":
             self.api_ready()
         elif url.path == "/icon.png":                     # Home Screen icon (apple-touch-icon)
@@ -808,7 +824,7 @@ class Handler(BaseHTTPRequestHandler):
                 "new": f["kind"] == "video" and f["name"] not in played})
         if missing:
             thumb_wake.set()
-        self.send_json(200, {"files": files, "deleted": deleted_list(), "keep_days": KEEP_DAYS})
+        self.send_json(200, {"files": files, "deleted": deleted_list(), "keep_days": KEEP_DAYS, "page": page_version()})
 
     def api_delete(self, data):
         try:
@@ -955,16 +971,26 @@ class Handler(BaseHTTPRequestHandler):
                 offset = 0
         if size - offset > shutil.disk_usage(UPLOADS).free - DISK_RESERVE:
             return self.fail(413, "not enough space on the computer")
-        part_started[part] = (time.time(), offset)
+        mode = "single" if data.get("mode") == "single" else "pieces"
+        ver = re.sub(r"[^\w.-]", "", str(data.get("v", "")))[:20] or "old"
+        st = part_started.get(part)
+        if st is None or mode == "single":                 # a fresh send from the page starts the clock again
+            part_started[part] = st = {"t0": time.time(), "off0": offset, "mode": mode, "pieces": 0, "resumes": 0, "broke": None}
+        elif mode == "pieces":
+            st["resumes"] += 1
+        how = "one request" if mode == "single" else "in pieces"
         upload_log(ip, "resume" if offset else "start",
-                   f"{os.path.basename(folder)}/{name}  {size / 1024**2:.1f} MB" + (f"  from {offset / 1024**2:.1f} MB" if offset else ""))
+                   f"{os.path.basename(folder)}/{name}  {size / 1024**2:.1f} MB" + (f"  from {offset / 1024**2:.1f} MB" if offset else "")
+                   + f"  · {how} · page {ver}")
         self.send_json(200, {"state": "resume" if offset else "new", "offset": offset})
 
     def upload_chunk(self, q):
         """body = bytes [offset, offset + len) of the file; appended to the .part file only if offset == its size.
         A complete .part is renamed to the real name; an interrupted piece keeps what arrived, so the page resumes.
         Every answer here ends its connection ("Connection: close"): iPhone Safari can leave the answer to a piece unread
-        on a kept-alive connection and sit until the page gives up; a fresh connection per piece avoids that."""
+        on a kept-alive connection and sit until the page gives up; a fresh connection per piece avoids that.
+        mode=single (1.3.4): the body is the WHOLE rest of the file in one streaming request, the normal path; if it breaks,
+        the bytes that arrived stay in the .part and the page goes on in pieces from there."""
         self.close_connection = True
         folder, name, size = self.upload_args((q.get("batch") or [""])[0], (q.get("name") or [""])[0], (q.get("size") or [""])[0])
         n, ip = self.body_length(), self.client_address[0]
@@ -974,7 +1000,8 @@ class Handler(BaseHTTPRequestHandler):
             offset = -1
         if folder is None or name is None or size < 0 or offset < 0:
             self.discard_body(); return self.fail(400, "unknown upload")
-        if n is None or n > CHUNK_MAX or offset + n > size:
+        single = (q.get("mode") or [""])[0] == "single"
+        if n is None or offset + n > size or (n > CHUNK_MAX and not (single and offset + n == size)):
             return self.fail(400, "bad piece of the file", close=True)
         part = os.path.join(folder, part_name(name, size))
         with upload_lock:
@@ -1006,8 +1033,12 @@ class Handler(BaseHTTPRequestHandler):
             self.close_connection = True
             with upload_lock:
                 part_busy.discard(part)
+            st = part_started.get(part)
+            if single and st is not None and st["broke"] is None:
+                st["broke"] = offset + got
             upload_log(ip, "abort", f"{os.path.basename(folder)}/{name}  stopped at {(offset + got) / 1024**2:.1f} of {size / 1024**2:.1f} MB "
-                                    f"({e.__class__.__name__}); the .part is kept, the upload can continue")
+                                    f"({e.__class__.__name__}" + (", one request; going on in pieces" if single else "")
+                                    + "); the .part is kept, the upload can continue")
             if not isinstance(e, (ConnectionError, socket.timeout)):
                 try:
                     self.fail(500, "could not save", close=True)
@@ -1017,6 +1048,8 @@ class Handler(BaseHTTPRequestHandler):
         with upload_lock:
             part_busy.discard(part)
             have = offset + got
+            if not single and part in part_started:
+                part_started[part]["pieces"] += 1
             if have < size:
                 return self.send_json(200, {"state": "partial", "offset": have})
             try:
@@ -1024,8 +1057,19 @@ class Handler(BaseHTTPRequestHandler):
             except OSError as e:
                 log(f"rename FAILED {part}: {e!r}")
                 return self.fail(500, "could not save")
-        t0, off0 = part_started.pop(part, (None, 0))
-        took = f", {time.time() - t0:.0f} s, {(size - off0) / 1024**2 / max(0.1, time.time() - t0):.1f} MB/s" if t0 else ""
+        st = part_started.pop(part, None)
+        took = ""
+        if st:
+            sec = time.time() - st["t0"]
+            took = f", {sec:.0f} s, {(size - st['off0']) / 1024**2 / max(0.1, sec):.1f} MB/s"
+            if single and st["broke"] is None and not st["pieces"]:
+                took += ", one request"
+            elif not st["pieces"]:
+                took += f", one request (went on after a break at {st['broke'] / 1024**2:.1f} MB)" if st["broke"] is not None else ", one request"
+            else:
+                took += (f", in pieces (pieces: {st['pieces']}, retries: {st['resumes']}"
+                         + (f"; one request broke at {st['broke'] / 1024**2:.1f} MB" if st["broke"] is not None else "")
+                         + ("; the end in one request" if single else "") + ")")
         upload_log(ip, "finish", f"{os.path.basename(folder)}/{final}  {size / 1024**2:.1f} MB{took}")
         self.send_json(201, {"state": "done", "saved": os.path.basename(folder) + "/" + final, "size": size})
 
